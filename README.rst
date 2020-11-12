@@ -40,7 +40,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Affiliation
 -----------
 
-This material is developped by the Scientific Computations and Modelling
+This material is developed by the Scientific Computations and Modelling
 platform at the Institut des Sciences de la Terre d'Orléans
 (https://www.isto-orleans.fr/), a joint laboratory of the University of Orléans
 (https://www.univ-orleans.fr/), the french National Center For Scientific
