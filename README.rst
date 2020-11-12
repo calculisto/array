@@ -1,14 +1,11 @@
-isto::test
-==========
+isto::array
+===========
 
-A ``C++20`` headers-only library.
-
-Aims at being to ``std::array`` what ``std::valarray`` is to ``srtd::vector``.
+A ``C++20`` headers-only library that aims at being to ``std::array`` what 
+``std::valarray`` is to ``srtd::vector``.
 
 Requirements
 ------------
-
-- A ``C++20`` capable compiler.
 
 To run the tests:
 
@@ -38,3 +35,14 @@ License
 -------
 
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+
+Affiliation
+-----------
+
+This material is developped by the Scientific Computations and Modelling
+platform at the Institut des Sciences de la Terre d'Orléans
+(https://www.isto-orleans.fr/), a joint laboratory of the University of Orléans
+(https://www.univ-orleans.fr/), the french National Center For Scientific
+Research (https://www.cnrs.fr/) and the french Geological Survey
+(https://www.brgm.eu/).
