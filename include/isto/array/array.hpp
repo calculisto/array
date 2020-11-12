@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #include <array>
 #include <algorithm>
 #include <numeric>
