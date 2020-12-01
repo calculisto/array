@@ -808,6 +808,16 @@ concatenate (Arrays&&... arrays)
     return ( ... ,  arrays);
 }
 
+    template <class T, auto N> 
+    constexpr auto
+sum (array_t <T, N> const& array)
+{
+    return std::accumulate (
+          array.begin ()
+        , array.end ()
+        , static_cast <T> (0)
+    );
+}
 
 
 } // namespace isto::array

@@ -209,4 +209,11 @@ TEST_CASE("array.hpp")
         result = concatenate (a, b, c);
         CHECK (result == expected);
     }
+    // sum
+    {
+            constexpr auto
+        a = array_t { 1, 2, 3 };
+        static_assert (sum (a) == 6);
+    }
+
 }
