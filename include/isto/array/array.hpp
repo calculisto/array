@@ -258,20 +258,30 @@ public:
     }
     */
 
-/*
-#   define COMPUTED_ASSIGNEMENT(op)              \
-        constexpr array&                       \
-    operator op##= (const value_type& x)         \
-    {                                            \
-        std::transform (                         \
-                begin (),                        \
-                end (),                          \
-                begin (),                        \
-                [=](auto e){ return e op##= x; } \
-        );                                       \
-        return *this;                            \
+
+#   define COMPUTED_ASSIGNEMENT(op)               \
+        constexpr auto                            \
+    operator op##= (const value_type& x)          \
+    {                                             \
+        std::transform (                          \
+                begin (),                         \
+                end (),                           \
+                begin (),                         \
+                [=](auto& e){ return e op##= x; } \
+        );                                        \
+        return *this;                             \
     }
-*/
+    COMPUTED_ASSIGNEMENT(*)
+    COMPUTED_ASSIGNEMENT(/)
+    COMPUTED_ASSIGNEMENT(%)
+    COMPUTED_ASSIGNEMENT(+)
+    COMPUTED_ASSIGNEMENT(-)
+    COMPUTED_ASSIGNEMENT(^)
+    COMPUTED_ASSIGNEMENT(&)
+    COMPUTED_ASSIGNEMENT(|)
+    COMPUTED_ASSIGNEMENT(<<)
+    COMPUTED_ASSIGNEMENT(>>)
+#   undef COMPUTED_ASSIGNEMENT
         /*
 #   define COMPUTED_ASSIGNEMENT(op)                                                      \
         template <                                                                       \
@@ -298,14 +308,15 @@ public:
     COMPUTED_ASSIGNEMENT(<<)
     COMPUTED_ASSIGNEMENT(>>)
 #   undef COMPUTED_ASSIGNEMENT
-
+*/
+// Don't know how to constraint that...
+// , class = decltype (std::declval <value_type> () op##= std::declval <U> ())
 #   define COMPUTED_ASSIGNEMENT(op)                                                      \
         template <                                                                       \
               class U                                                                    \
-            , class = decltype (std::declval <value_type> () op##= std::declval <U> ()) \
         >                                                                                \
-        constexpr array&                                                                 \
-    operator op##= (array <U, N> const& v)                                               \
+        constexpr decltype (auto)                                                        \
+    operator op##= (array_t <U, N> const& v)                                             \
     {                                                                                    \
         std::transform (                                                                 \
             begin   (),                                                                  \
@@ -327,7 +338,7 @@ public:
     COMPUTED_ASSIGNEMENT(<<)
     COMPUTED_ASSIGNEMENT(>>)
 #   undef COMPUTED_ASSIGNEMENT
-*/
+
         auto
     operator <=> (array_t <T, N> const&) const = default;
 }; // class array

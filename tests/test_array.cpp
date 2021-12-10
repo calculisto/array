@@ -99,7 +99,6 @@ TEST_CASE("array.hpp")
     CHECK(b[0] == -1.0);
     CHECK(b[1] == -2.0);
     CHECK(b[2] == -3.0);
-    /*
     b *= 2.0;
     CHECK(b[0] == -2.0);
     CHECK(b[1] == -4.0);
@@ -132,7 +131,6 @@ TEST_CASE("array.hpp")
     CHECK(b[0] == -1.0);
     CHECK(b[1] == -2.0);
     CHECK(b[2] == -3.0);
-    */
         auto
     c = a + b;
     CHECK(c[0] == 0.0);
