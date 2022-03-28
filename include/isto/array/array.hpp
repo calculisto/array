@@ -773,7 +773,7 @@ hypot (array_t <T, 2> const& p)
 hypot (array_t <T, 3> const& p)
 {
         using std::hypot;
-    return hypot (p[0], p[1], p[3]);
+    return hypot (p[0], p[1], p[2]);
 }
 
 // Concatenation.
