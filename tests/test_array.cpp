@@ -27,6 +27,7 @@ TEST_CASE("array.hpp")
         static_assert (a[0] == 1);
         static_assert (a[1] == 2);
     };
+    /*
     SUBCASE("converting copy ctor")
     {
             constexpr
@@ -40,6 +41,7 @@ TEST_CASE("array.hpp")
         static_assert (b[1] == 2.0);
             
     };
+    */
     /*
     SUBCASE("converting assignement")
     {

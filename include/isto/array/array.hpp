@@ -12,14 +12,16 @@ isto::array
  * (A bit like what std::valarray is to std::vector.)
  */
     template <class T, std::size_t N>
-    class
+    struct
 array_t
 {
+public:
         using
     backend_type = std::array <T, N>;
+
         backend_type
-    data_m;
-public:
+    content;
+
         using
     value_type             = T;
         using
@@ -43,11 +45,12 @@ public:
         using
     const_reverse_iterator = std::reverse_iterator <const_iterator>;
 
-    array_t () = default;
+    //array_t () = default;
 
     /**
      */
     // Converting ctor
+    /*
         template <
               class... ArgsType
             , class = std::enable_if_t <sizeof...(ArgsType) == N>
@@ -69,6 +72,7 @@ public:
     {
         std::copy (a.begin (), a.end (), begin ());
     }
+    */
     /*
         template <class U>
         constexpr array // ditto
@@ -84,157 +88,157 @@ public:
         constexpr void
     fill (const value_type& u)
     {
-        data_m.fill (u);
+        content.fill (u);
     }
     // Iterators.
         constexpr decltype (auto)
     begin () noexcept
     {
-       return data_m.begin ();
+       return content.begin ();
     }
 
         constexpr decltype (auto)
     begin () const noexcept
     {
-       return data_m.begin ();
+       return content.begin ();
     }
 
         constexpr decltype (auto)
     end () noexcept
     {
-        return data_m.end ();
+        return content.end ();
     }
 
         constexpr decltype (auto)
     end () const noexcept
     {
-        return data_m.end ();
+        return content.end ();
     }
 
         constexpr decltype (auto)
     rbegin () noexcept
     {
-        return data_m.rbegin ();
+        return content.rbegin ();
     }
 
         constexpr decltype (auto)
     rbegin () const noexcept
     {
-        return data_m.rbegin ();
+        return content.rbegin ();
     }
 
         constexpr decltype (auto)
     rend () noexcept
     {
-        return data_m.rend ();
+        return content.rend ();
     }
 
         constexpr decltype (auto)
     rend () const noexcept
     {
-        return data_m.rend ();
+        return content.rend ();
     }
 
         constexpr decltype (auto)
     cbegin () const noexcept
     {
-        return data_m.cbegin ();
+        return content.cbegin ();
     }
 
         constexpr decltype (auto)
     cend () const noexcept
     {
-        return data_m.cend ();
+        return content.cend ();
     }
 
         constexpr decltype (auto)
     crbegin () const noexcept
     {
-        return data_m.crbegin ();
+        return content.crbegin ();
     }
 
         constexpr decltype (auto)
     crend () const noexcept
     {
-        return data_m.crend ();
+        return content.crend ();
     }
 
     // Capacity.
         constexpr size_type
     size () const noexcept
     {
-        return data_m.size ();
+        return content.size ();
     }
 
         constexpr size_type
     max_size () const noexcept
     {
-        return data_m.max_size ();
+        return content.max_size ();
     }
 
         constexpr bool
     empty () const noexcept
     {
-        return data_m.empty ();
+        return content.empty ();
     }
 
     // Element access.
         constexpr decltype (auto)
     operator[] (size_type n) noexcept
     {
-        return data_m[n];
+        return content[n];
     }
 
         constexpr decltype (auto)
     operator[] (size_type n) const noexcept
     {
-        return data_m[n];
+        return content[n];
     }
 
         constexpr decltype (auto)
     at (size_type n)
     {
-        return data_m.at (n);
+        return content.at (n);
     }
 
         constexpr decltype (auto)
     at (size_type n) const
     {
-        return data_m.at (n);
+        return content.at (n);
     }
 
         constexpr decltype (auto)
     front () noexcept
     {
-        return data_m.front ();
+        return content.front ();
     }
 
         constexpr decltype (auto)
     front () const noexcept
     {
-        return data_m.front ();
+        return content.front ();
     }
 
         constexpr decltype (auto)
     back () noexcept
     {
-        return data_m.back ();
+        return content.back ();
     }
 
         constexpr decltype (auto)
     back () const noexcept
     {
-        return data_m.back ();
+        return content.back ();
     }
         constexpr decltype (auto)
     data () noexcept
     {
-        return data_m.data ();
+        return content.data ();
     }
         constexpr decltype (auto)
     data () const noexcept
     {
-        return data_m.data ();
+        return content.data ();
     }
 
         /*
