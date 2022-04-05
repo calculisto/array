@@ -45,19 +45,18 @@ public:
         using
     const_reverse_iterator = std::reverse_iterator <const_iterator>;
 
-    //array_t () = default;
+    array_t () = default;
 
     /**
      */
     // Converting ctor
-    /*
         template <
               class... ArgsType
             , class = std::enable_if_t <sizeof...(ArgsType) == N>
         >
         explicit constexpr
     array_t (ArgsType&&... args)
-        : data_m {{ std::forward <ArgsType> (args)... }}
+        : content {{ std::forward <ArgsType> (args)... }}
     {}
 
     // Converting copy ctor
@@ -68,11 +67,10 @@ public:
         explicit (false)
         constexpr
     array_t (array_t <U, N> const& a)
-        : data_m {}
+        : content {}
     {
         std::copy (a.begin (), a.end (), begin ());
     }
-    */
     /*
         template <class U>
         constexpr array // ditto
