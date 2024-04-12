@@ -2,7 +2,7 @@ isto::array
 ===========
 
 A ``C++20`` headers-only library that aims at being to ``std::array`` what 
-``std::valarray`` is to ``srtd::vector``.
+``std::valarray`` is to ``std::vector``.
 
 Requirements
 ------------
