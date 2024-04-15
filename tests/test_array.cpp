@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
-#include "../include/isto/array/array.hpp"
-    using isto::array::array_t;
+#include "../include/calculisto/array/array.hpp"
+    using calculisto::array::array_t;
 
 TEST_CASE("array.hpp")
 {

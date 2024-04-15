@@ -6,7 +6,7 @@
 #include <cmath>
 
     namespace
-isto::array
+calculisto::array
 {
 /** An array with arithmetic operations.
  * This is a std::array with operators and math functions.
@@ -834,4 +834,4 @@ sum (array_t <T, N> const& array)
 }
 
 
-} // namespace isto::array
+} // namespace calculisto::array
