@@ -1,7 +1,4 @@
 include ../config.mk
-
-CXXFLAGS+=-I../${DOCTEST_HEADERS}
-
 .PHONY: all clean check
 
 all: check
