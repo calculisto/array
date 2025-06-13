@@ -27,6 +27,12 @@ TEST_CASE("array.hpp")
         static_assert (a[0] == 1);
         static_assert (a[1] == 2);
     };
+    SUBCASE("Assignement")
+    {
+            auto
+        a = array_t <double, 2> {};
+        a = { 0.1, 0.2 };
+    }
     /*
     SUBCASE("converting copy ctor")
     {

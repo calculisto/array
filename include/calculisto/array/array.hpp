@@ -55,7 +55,7 @@ public:
               class... ArgsType
             , class = std::enable_if_t <sizeof...(ArgsType) == N>
         >
-        explicit constexpr
+        constexpr
     array_t (ArgsType&&... args)
         : content {{ std::forward <ArgsType> (args)... }}
     {}
