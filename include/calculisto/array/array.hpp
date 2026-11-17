@@ -23,37 +23,44 @@ public:
         backend_type
     content;
 
+    // Use the backend's types: std::array's iterators are not necessarily
+    // pointers (they are class types in some standard libraries).
         using
-    value_type             = T;
+    value_type             = typename backend_type::value_type;
         using
-    pointer                = value_type*;
+    pointer                = typename backend_type::pointer;
         using
-    const_pointer          = const value_type*;
+    const_pointer          = typename backend_type::const_pointer;
         using
-    reference              = value_type&;
+    reference              = typename backend_type::reference;
         using
-    const_reference        = const value_type&;
+    const_reference        = typename backend_type::const_reference;
         using
-    iterator               = value_type*;
+    iterator               = typename backend_type::iterator;
         using
-    const_iterator         = const value_type*;
+    const_iterator         = typename backend_type::const_iterator;
         using
-    size_type              = std::size_t;
+    size_type              = typename backend_type::size_type;
         using
-    difference_type        = std::ptrdiff_t;
+    difference_type        = typename backend_type::difference_type;
         using
-    reverse_iterator       = std::reverse_iterator <iterator>;
+    reverse_iterator       = typename backend_type::reverse_iterator;
         using
-    const_reverse_iterator = std::reverse_iterator <const_iterator>;
+    const_reverse_iterator = typename backend_type::const_reverse_iterator;
 
     array_t () = default;
 
     /**
      */
     // Converting ctor
+    // Each argument must be convertible to value_type, otherwise, for N == 1,
+    // this would hijack the copy ctor when copying from a non-const lvalue.
         template <
               class... ArgsType
-            , class = std::enable_if_t <sizeof...(ArgsType) == N>
+            , class = std::enable_if_t <
+                     sizeof...(ArgsType) == N
+                  && (std::is_convertible_v <ArgsType, T> && ...)
+              >
         >
         constexpr
     array_t (ArgsType&&... args)
@@ -89,74 +96,80 @@ public:
     {
         content.fill (u);
     }
+
+        constexpr void
+    swap (array_t& other) noexcept (std::is_nothrow_swappable_v <value_type>)
+    {
+        content.swap (other.content);
+    }
     // Iterators.
-        constexpr decltype (auto)
+        constexpr iterator
     begin () noexcept
     {
        return content.begin ();
     }
 
-        constexpr decltype (auto)
+        constexpr const_iterator
     begin () const noexcept
     {
        return content.begin ();
     }
 
-        constexpr decltype (auto)
+        constexpr iterator
     end () noexcept
     {
         return content.end ();
     }
 
-        constexpr decltype (auto)
+        constexpr const_iterator
     end () const noexcept
     {
         return content.end ();
     }
 
-        constexpr decltype (auto)
+        constexpr reverse_iterator
     rbegin () noexcept
     {
         return content.rbegin ();
     }
 
-        constexpr decltype (auto)
+        constexpr const_reverse_iterator
     rbegin () const noexcept
     {
         return content.rbegin ();
     }
 
-        constexpr decltype (auto)
+        constexpr reverse_iterator
     rend () noexcept
     {
         return content.rend ();
     }
 
-        constexpr decltype (auto)
+        constexpr const_reverse_iterator
     rend () const noexcept
     {
         return content.rend ();
     }
 
-        constexpr decltype (auto)
+        constexpr const_iterator
     cbegin () const noexcept
     {
         return content.cbegin ();
     }
 
-        constexpr decltype (auto)
+        constexpr const_iterator
     cend () const noexcept
     {
         return content.cend ();
     }
 
-        constexpr decltype (auto)
+        constexpr const_reverse_iterator
     crbegin () const noexcept
     {
         return content.crbegin ();
     }
 
-        constexpr decltype (auto)
+        constexpr const_reverse_iterator
     crend () const noexcept
     {
         return content.crend ();
@@ -346,7 +359,12 @@ public:
     operator <=> (array_t <T, N> const&) const = default;
 }; // class array
 
-// TODO swap
+    template <class T, std::size_t N>
+    constexpr void
+swap (array_t <T, N>& a, array_t <T, N>& b) noexcept (noexcept (a.swap (b)))
+{
+    a.swap (b);
+}
 
     template <class T, class... U>
 array_t (T, U...) -> array_t <T, 1 + sizeof... (U)>;

@@ -1,5 +1,7 @@
 #include <doctest/doctest.h>
 #include "../include/calculisto/array/array.hpp"
+#include <ranges>
+#include <utility>
     using calculisto::array::array_t;
 
 TEST_CASE("array.hpp")
@@ -32,6 +34,62 @@ TEST_CASE("array.hpp")
             auto
         a = array_t <double, 2> {};
         a = { 0.1, 0.2 };
+    }
+    SUBCASE("copy ctor, N == 1")
+    {
+            array_t <double, 1>
+        a { 1.f };
+            array_t <double, 1>
+        b ( a );
+        CHECK(b[0] == 1.0);
+            array_t <double, 1> const
+        c { 2.0 };
+            array_t <double, 1>
+        d ( c );
+        CHECK(d[0] == 2.0);
+        static_assert (std::is_copy_constructible_v <array_t <double, 1>>);
+        static_assert (std::is_constructible_v <array_t <double, 1>, array_t <double, 1>&>);
+        static_assert (! std::is_convertible_v <int*, array_t <double, 1>>);
+        static_assert (! std::is_constructible_v <array_t <double, 2>, int*, int*>);
+    }
+    SUBCASE("swap")
+    {
+            array_t <int, 3>
+        a { 1, 2, 3 };
+            array_t <int, 3>
+        b { 4, 5, 6 };
+        a.swap (b);
+        CHECK(a == array_t <int, 3> { 4, 5, 6 });
+        CHECK(b == array_t <int, 3> { 1, 2, 3 });
+        swap (a, b);
+        CHECK(a == array_t <int, 3> { 1, 2, 3 });
+        CHECK(b == array_t <int, 3> { 4, 5, 6 });
+            using
+        std::swap;
+        swap (a, b);
+        CHECK(a == array_t <int, 3> { 4, 5, 6 });
+        CHECK(b == array_t <int, 3> { 1, 2, 3 });
+        static_assert (noexcept (a.swap (b)));
+        static_assert (std::is_nothrow_swappable_v <array_t <int, 3>>);
+    }
+    SUBCASE("iterator types")
+    {
+            using
+        a_t = array_t <double, 3>;
+        static_assert (std::is_same_v <decltype (std::declval <a_t&>       ().begin   ()), a_t::iterator>);
+        static_assert (std::is_same_v <decltype (std::declval <a_t&>       ().end     ()), a_t::iterator>);
+        static_assert (std::is_same_v <decltype (std::declval <a_t const&> ().begin   ()), a_t::const_iterator>);
+        static_assert (std::is_same_v <decltype (std::declval <a_t const&> ().end     ()), a_t::const_iterator>);
+        static_assert (std::is_same_v <decltype (std::declval <a_t&>       ().cbegin  ()), a_t::const_iterator>);
+        static_assert (std::is_same_v <decltype (std::declval <a_t&>       ().cend    ()), a_t::const_iterator>);
+        static_assert (std::is_same_v <decltype (std::declval <a_t&>       ().rbegin  ()), a_t::reverse_iterator>);
+        static_assert (std::is_same_v <decltype (std::declval <a_t&>       ().rend    ()), a_t::reverse_iterator>);
+        static_assert (std::is_same_v <decltype (std::declval <a_t const&> ().rbegin  ()), a_t::const_reverse_iterator>);
+        static_assert (std::is_same_v <decltype (std::declval <a_t&>       ().crbegin ()), a_t::const_reverse_iterator>);
+        static_assert (std::is_same_v <decltype (std::declval <a_t&>       ().crend   ()), a_t::const_reverse_iterator>);
+        static_assert (std::is_convertible_v <a_t::iterator, a_t::const_iterator>);
+        static_assert (std::ranges::contiguous_range <a_t>);
+        static_assert (std::ranges::sized_range <a_t>);
     }
     /*
     SUBCASE("converting copy ctor")
