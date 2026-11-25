@@ -1,0 +1,31 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc
+            cxx: g++
+            packages: g++ doctest-dev
+          - name: clang + libc++
+            cxx: clang++ -stdlib=libc++
+            packages: clang libc++-dev libc++abi-dev doctest-dev
+          # std::array iterators are class types instead of pointers, as with
+          # some other standard libraries (e.g. MSVC's).
+          - name: clang + libc++ with class-type iterators
+            cxx: clang++ -stdlib=libc++ -D_LIBCPP_ABI_USE_WRAP_ITER_IN_STD_ARRAY
+            packages: clang libc++-dev libc++abi-dev doctest-dev
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install --yes ${{ matrix.packages }}
+      - name: Run the tests
+        run: make check CXX="${{ matrix.cxx }}"
