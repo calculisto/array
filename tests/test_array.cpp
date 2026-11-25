@@ -5,21 +5,61 @@
 #include <utility>
     using calculisto::array::array_t;
 
+    template <class A, class... ArgsType>
+    concept
+brace_initializable = requires (ArgsType... args) { A { args... }; };
+
+    template <class... ArgsType>
+    concept
+deducible = requires (ArgsType... args) { calculisto::array::array_t { args... }; };
+
 TEST_CASE("construction and assignment")
 {
-    SUBCASE("default ctor")
+    SUBCASE("aggregate, like std::array")
+    {
+        static_assert (std::is_aggregate_v <array_t <double, 3>>);
+        static_assert (std::is_aggregate_v <array_t <double, 0>>);
+    }
+    SUBCASE("default initialization")
     {
             [[maybe_unused]]
             array_t <int, 2>
         a;
+            array_t <int, 2>
+        b {};
+        CHECK(b == array_t <int, 2> { 0, 0 });
     }
-    SUBCASE("converting ctor")
+    SUBCASE("initialization")
     {
             array_t <double, 2>
             constexpr
         a { 1.f, 2.f };
         static_assert (a[0] == 1.0);
         static_assert (a[1] == 2.0);
+            array_t <double, 2>
+            constexpr
+        b = { 1.0, 2.0 };
+        static_assert (b == a);
+    }
+    SUBCASE("constants that fit are not narrowing, as for std::array")
+    {
+            array_t <double, 3>
+            constexpr
+        a { 0, 0, 1 };
+        static_assert (a[2] == 1.0);
+    }
+    SUBCASE("narrowing is rejected, as for std::array")
+    {
+#       define TEST_NARROWING(expected, T, ...)                                       \
+        static_assert (brace_initializable <array_t    <T, 1>, __VA_ARGS__> == expected); \
+        static_assert (brace_initializable <std::array <T, 1>, __VA_ARGS__> == expected);
+        TEST_NARROWING(true,  double, double)
+        TEST_NARROWING(true,  double, float)
+        TEST_NARROWING(false, double, int)
+        TEST_NARROWING(false, int,    double)
+        TEST_NARROWING(false, int,    long)
+        TEST_NARROWING(false, float,  double)
+#       undef TEST_NARROWING
     }
     SUBCASE("CTAD")
     {
@@ -30,18 +70,14 @@ TEST_CASE("construction and assignment")
         static_assert (a[0] == 1);
         static_assert (a[1] == 2);
     }
-    SUBCASE("converting copy ctor")
+    SUBCASE("CTAD requires elements of the same type, as for std::array")
     {
-            constexpr
-            array_t
-        a { 1, 2 };
-            constexpr
-            array_t <double, 2>
-        b { a };
-        static_assert (b[0] == 1.0);
-        static_assert (b[1] == 2.0);
+        static_assert (deducible <int, int>);
+        static_assert (deducible <double, double, double>);
+        static_assert (not deducible <int, double>);
+        static_assert (not deducible <double, float>);
     }
-    SUBCASE("copy ctor, N == 1")
+    SUBCASE("copy, N == 1")
     {
             array_t <double, 1>
         a { 1.f };
@@ -70,19 +106,43 @@ TEST_CASE("construction and assignment")
         b = a;
         CHECK(b == a);
     }
-    SUBCASE("converting assignment")
-    {
-            array_t <double, 2>
-        a;
-        a = array_t { 1, 2 };
-        CHECK(a == array_t <double, 2> { 1.0, 2.0 });
-    }
     SUBCASE("fill")
     {
             array_t <double, 3>
         a { 1.0, 2.0, 3.0 };
         a.fill (4.0);
         CHECK(a == array_t <double, 3> { 4.0, 4.0, 4.0 });
+    }
+}
+
+    template <class U, class A>
+    concept
+castable = requires (A a) { calculisto::array::array_cast <U> (a); };
+
+TEST_CASE("array_cast")
+{
+    SUBCASE("widening")
+    {
+            constexpr auto
+        a = array_cast <double> (array_t { 1, 2 });
+        static_assert (std::is_same_v <decltype (a), const array_t <double, 2>>);
+        static_assert (a == array_t { 1.0, 2.0 });
+    }
+    SUBCASE("narrowing is explicit, as with static_cast")
+    {
+            auto
+        a = array_cast <int> (array_t { 1.5, -2.5 });
+        static_assert (std::is_same_v <decltype (a), array_t <int, 2>>);
+        CHECK(a == array_t { 1, -2 });
+    }
+    SUBCASE("N == 0")
+    {
+        static_assert (array_cast <double> (array_t <int, 0> {}) == array_t <double, 0> {});
+    }
+    SUBCASE("only between convertible types")
+    {
+        static_assert (castable <double, array_t <int, 2>>);
+        static_assert (not castable <int*, array_t <double, 2>>);
     }
 }
 

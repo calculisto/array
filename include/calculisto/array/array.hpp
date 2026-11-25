@@ -15,6 +15,9 @@ calculisto::array
 /** An array with arithmetic operations.
  * This is a std::array with operators and math functions.
  * (A bit like what std::valarray is to std::vector.)
+ * Like std::array, it is an aggregate: it has no constructors, and narrowing
+ * conversions in its initialization are rejected. To convert the elements to
+ * another type, use array_cast.
  */
     template <class T, std::size_t N>
     struct
@@ -51,36 +54,6 @@ public:
     reverse_iterator       = typename backend_type::reverse_iterator;
         using
     const_reverse_iterator = typename backend_type::const_reverse_iterator;
-
-    array_t () = default;
-
-    // Converting ctor
-    // Each argument must be convertible to value_type, otherwise, for N == 1,
-    // this would hijack the copy ctor when copying from a non-const lvalue.
-        template <
-              class... ArgsType
-            , class = std::enable_if_t <
-                     sizeof...(ArgsType) == N
-                  && (std::is_convertible_v <ArgsType, T> && ...)
-              >
-        >
-        constexpr
-    array_t (ArgsType&&... args)
-        : content {{ std::forward <ArgsType> (args)... }}
-    {}
-
-    // Converting copy ctor
-        template <
-              class U
-            , class = std::enable_if_t <std::is_convertible_v <U, T>>
-        >
-        explicit (false)
-        constexpr
-    array_t (array_t <U, N> const& a)
-        : content {}
-    {
-        std::copy (a.begin (), a.end (), begin ());
-    }
 
         constexpr void
     fill (const value_type& u)
@@ -311,8 +284,12 @@ swap (array_t <T, N>& a, array_t <T, N>& b) noexcept (noexcept (a.swap (b)))
     a.swap (b);
 }
 
+// As for std::array, all the elements must have the same type.
     template <class T, class... U>
-array_t (T, U...) -> array_t <T, 1 + sizeof... (U)>;
+array_t (T, U...) -> array_t <
+      std::enable_if_t <(std::is_same_v <T, U> && ...), T>
+    , 1 + sizeof... (U)
+>;
     template <
           class T
         , std::size_t N
@@ -816,6 +793,34 @@ operator , (array_t <T, N1> const& a, array_t <T, N2> const& b)
 concatenate (Arrays&&... arrays)
 {
     return ( ... ,  arrays);
+}
+
+// Conversion of the elements to another type, as with static_cast.
+    namespace
+detail
+{
+        template <
+              class U
+            , class T
+            , std::size_t N
+            , std::size_t... I
+        >
+        constexpr array_t <U, N>
+    array_cast (array_t <T, N> const& a, std::index_sequence <I...>)
+    {
+        return array_t <U, N> { static_cast <U> (a[I])... };
+    }
+} // namespace detail
+    template <
+          class U
+        , class T
+        , std::size_t N
+        , class = decltype (static_cast <U> (std::declval <T const&> ()))
+    >
+    constexpr array_t <U, N>
+array_cast (array_t <T, N> const& a)
+{
+    return detail::array_cast <U> (a, std::make_index_sequence <N> ());
 }
 
     template <class T, auto N> 
