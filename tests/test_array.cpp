@@ -623,23 +623,51 @@ TEST_CASE("math functions lookup")
     }
 }
 
+    template <class... ArgsType>
+    concept
+concatenable = requires (ArgsType... args) { calculisto::array::concatenate (args...); };
+
 TEST_CASE("concatenation")
 {
-        array_t <unsigned, 1> const
-    a { 1u };
-        array_t <unsigned, 2> const
-    b { 2u, 3u };
-        array_t <unsigned, 3> const
-    c { 4u, 5u, 6u };
-    CHECK(concatenate (a, b) == array_t <unsigned, 3> { 1u, 2u, 3u });
-    CHECK(((a, b) == array_t <unsigned, 3> { 1u, 2u, 3u }));
-    CHECK(concatenate (a, b, c) == array_t <unsigned, 6> { 1u, 2u, 3u, 4u, 5u, 6u });
-    CHECK(concatenate (array_t { 1, 2 }, array_t { 3 }) == array_t { 1, 2, 3 });
-        constexpr
-        array_t
-    d { 1, 2 };
-        constexpr
-        array_t
-    e { 3 };
-    static_assert (concatenate (d, e) == array_t { 1, 2, 3 });
+    SUBCASE("values")
+    {
+            array_t <unsigned, 1> const
+        a { 1u };
+            array_t <unsigned, 2> const
+        b { 2u, 3u };
+            array_t <unsigned, 3> const
+        c { 4u, 5u, 6u };
+        CHECK(concatenate (a) == a);
+        CHECK(concatenate (a, b) == array_t <unsigned, 3> { 1u, 2u, 3u });
+        CHECK(concatenate (a, b, c) == array_t <unsigned, 6> { 1u, 2u, 3u, 4u, 5u, 6u });
+        CHECK(concatenate (c, a, b, a) == array_t <unsigned, 7> { 4u, 5u, 6u, 1u, 2u, 3u, 1u });
+        CHECK(concatenate (a, array_t <unsigned, 0> {}, b) == array_t <unsigned, 3> { 1u, 2u, 3u });
+    }
+    SUBCASE("constexpr, also on temporaries")
+    {
+            constexpr
+            array_t
+        d { 1, 2 };
+            constexpr
+            array_t
+        e { 3 };
+        static_assert (concatenate (d, e) == array_t { 1, 2, 3 });
+        static_assert (concatenate (array_t { 1, 2 }, array_t { 3 }) == array_t { 1, 2, 3 });
+        static_assert (concatenate (array_t { 1 }, array_t { 2 }, array_t { 3, 4 }) == array_t { 1, 2, 3, 4 });
+    }
+    SUBCASE("only arrays with the same element type")
+    {
+        static_assert (concatenable <array_t <int, 1>, array_t <int, 2>>);
+        static_assert (not concatenable <>);
+        static_assert (not concatenable <array_t <int, 1>, array_t <double, 1>>);
+        static_assert (not concatenable <array_t <int, 1>, array_t <int, 1>, array_t <double, 1>>);
+    }
+    SUBCASE("the comma operator is not overloaded")
+    {
+            using
+        a_t = array_t <int, 1>;
+            using
+        b_t = array_t <int, 2>;
+        static_assert (std::is_same_v <decltype ((std::declval <a_t&> (), std::declval <b_t&> ())), b_t&>);
+    }
 }

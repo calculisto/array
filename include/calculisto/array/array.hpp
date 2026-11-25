@@ -781,18 +781,27 @@ concatenate (
 ){
     return detail::concatenate (a1, a2, std::make_index_sequence <N1> (), std::make_index_sequence <N2> ());
 }
-
-    template <class T, std::size_t N1, std::size_t N2>
-    array_t <T, N1 + N2>
-operator , (array_t <T, N1> const& a, array_t <T, N2> const& b)
+    template <class T, std::size_t N>
+    constexpr array_t <T, N>
+concatenate (array_t <T, N> const& a)
 {
-    return concatenate (a, b);
+    return a;
 }
-    template <class... Arrays>
-    auto
-concatenate (Arrays&&... arrays)
-{
-    return ( ... ,  arrays);
+    template <
+          class T
+        , std::size_t N1
+        , std::size_t N2
+        , std::size_t N3
+        , class... Arrays
+    >
+    constexpr auto
+concatenate (
+          array_t <T, N1> const& a1
+        , array_t <T, N2> const& a2
+        , array_t <T, N3> const& a3
+        , Arrays const&... arrays
+){
+    return concatenate (concatenate (a1, a2), a3, arrays...);
 }
 
 // Conversion of the elements to another type, as with static_cast.
