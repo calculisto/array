@@ -6,6 +6,7 @@
 #include <ranges>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
     using calculisto::array::array_t;
 
@@ -257,6 +258,74 @@ TEST_CASE("iterators and capacity")
         CHECK(sum (a) == 0);
         CHECK(hypot (array_t <double, 0> {}) == 0.0);
         CHECK(concatenate (a, array_t <int, 1> { 1 }) == array_t <int, 1> { 1 });
+    }
+}
+
+    template <std::size_t I, class A>
+    concept
+gettable = requires (A a) { get <I> (a); };
+
+TEST_CASE("tuple protocol, as for std::array")
+{
+    SUBCASE("tuple_size and tuple_element")
+    {
+            using
+        a_t = array_t <double, 3>;
+        static_assert (std::tuple_size_v <a_t> == 3);
+        static_assert (std::tuple_size_v <array_t <int, 0>> == 0);
+        static_assert (std::is_same_v <std::tuple_element_t <0, a_t>, double>);
+        static_assert (std::is_same_v <std::tuple_element_t <2, a_t>, double>);
+    }
+    SUBCASE("get")
+    {
+            constexpr
+            array_t
+        c { 1, 2, 3 };
+        static_assert (get <0> (c) == 1);
+        static_assert (get <2> (c) == 3);
+            array_t
+        a { 1, 2, 3 };
+        get <1> (a) = 5;
+        CHECK(a == array_t { 1, 5, 3 });
+        static_assert (std::is_same_v <decltype (get <0> (a)), int&>);
+        static_assert (std::is_same_v <decltype (get <0> (std::as_const (a))), int const&>);
+        static_assert (std::is_same_v <decltype (get <0> (std::move (a))), int&&>);
+        static_assert (std::is_same_v <decltype (get <0> (std::move (std::as_const (a)))), int const&&>);
+        static_assert (gettable <2, array_t <int, 3>>);
+        static_assert (not gettable <3, array_t <int, 3>>);
+    }
+    SUBCASE("structured bindings")
+    {
+            array_t
+        a { 1.0, 2.0, 3.0 };
+        {
+                auto
+            [x, y, z] = a;
+            CHECK(x == 1.0);
+            CHECK(y == 2.0);
+            CHECK(z == 3.0);
+        }
+        {
+                auto&
+            [x, y, z] = a;
+            x = 4.0;
+            z = 6.0;
+            CHECK(a == array_t { 4.0, 2.0, 6.0 });
+            static_assert (std::is_same_v <decltype (y), double>);
+        }
+        static_assert ([]
+        {
+                auto
+            [x, y] = array_t { 1, 2 };
+            return 10 * x + y;
+        }() == 12);
+            int
+        total = 0;
+        for (auto [i, j] : array_t { array_t { 1, 2 }, array_t { 3, 4 } })
+        {
+            total += 10 * i + j;
+        }
+        CHECK(total == 12 + 34);
     }
 }
 

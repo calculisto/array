@@ -284,6 +284,40 @@ swap (array_t <T, N>& a, array_t <T, N>& b) noexcept (noexcept (a.swap (b)))
     a.swap (b);
 }
 
+// Tuple protocol, as for std::array, which enables structured bindings
+// (with the std::tuple_size and std::tuple_element specializations at the
+// end of this file). Unlike for std::array, std::get and std::apply can't
+// be supported, as functions can't be added to namespace std: use
+// unqualified get, or a.content, which is a std::array.
+    template <std::size_t I, class T, std::size_t N>
+    requires (I < N)
+    constexpr T&
+get (array_t <T, N>& a) noexcept
+{
+    return a[I];
+}
+    template <std::size_t I, class T, std::size_t N>
+    requires (I < N)
+    constexpr T const&
+get (array_t <T, N> const& a) noexcept
+{
+    return a[I];
+}
+    template <std::size_t I, class T, std::size_t N>
+    requires (I < N)
+    constexpr T&&
+get (array_t <T, N>&& a) noexcept
+{
+    return std::move (a[I]);
+}
+    template <std::size_t I, class T, std::size_t N>
+    requires (I < N)
+    constexpr T const&&
+get (array_t <T, N> const&& a) noexcept
+{
+    return std::move (a[I]);
+}
+
 // As for std::array, all the elements must have the same type.
     template <class T, class... U>
     requires (std::is_same_v <T, U> && ...)
@@ -884,5 +918,19 @@ sum (array_t <T, N> const& array)
     );
 }
 
-
 } // namespace calculisto::array
+
+// Tuple protocol, see get above.
+    template <class T, std::size_t N>
+    struct
+std::tuple_size <calculisto::array::array_t <T, N>>
+    : std::integral_constant <std::size_t, N>
+{};
+    template <std::size_t I, class T, std::size_t N>
+    requires (I < N)
+    struct
+std::tuple_element <I, calculisto::array::array_t <T, N>>
+{
+        using
+    type = T;
+};
