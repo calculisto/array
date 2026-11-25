@@ -4,6 +4,10 @@
 #include <algorithm>
 #include <numeric>
 #include <cmath>
+#include <cstddef>
+#include <iterator>
+#include <type_traits>
+#include <utility>
 
     namespace
 calculisto::array
@@ -50,8 +54,6 @@ public:
 
     array_t () = default;
 
-    /**
-     */
     // Converting ctor
     // Each argument must be convertible to value_type, otherwise, for N == 1,
     // this would hijack the copy ctor when copying from a non-const lvalue.
@@ -79,18 +81,7 @@ public:
     {
         std::copy (a.begin (), a.end (), begin ());
     }
-    /*
-        template <class U>
-        constexpr array // ditto
-    operator= (array <U, N> const& a)
-    {
-        for (std::size_t i = 0; i < N; ++i)
-        {
-            data_m [i] = a[i];
-        }
-        //std::copy (a.begin (), a.end (), begin ());
-    }
-    */
+
         constexpr void
     fill (const value_type& u)
     {
@@ -195,87 +186,67 @@ public:
     }
 
     // Element access.
-        constexpr decltype (auto)
+        constexpr reference
     operator[] (size_type n) noexcept
     {
         return content[n];
     }
 
-        constexpr decltype (auto)
+        constexpr const_reference
     operator[] (size_type n) const noexcept
     {
         return content[n];
     }
 
-        constexpr decltype (auto)
+        constexpr reference
     at (size_type n)
     {
         return content.at (n);
     }
 
-        constexpr decltype (auto)
+        constexpr const_reference
     at (size_type n) const
     {
         return content.at (n);
     }
 
-        constexpr decltype (auto)
+        constexpr reference
     front () noexcept
     {
         return content.front ();
     }
 
-        constexpr decltype (auto)
+        constexpr const_reference
     front () const noexcept
     {
         return content.front ();
     }
 
-        constexpr decltype (auto)
+        constexpr reference
     back () noexcept
     {
         return content.back ();
     }
 
-        constexpr decltype (auto)
+        constexpr const_reference
     back () const noexcept
     {
         return content.back ();
     }
-        constexpr decltype (auto)
+
+        constexpr pointer
     data () noexcept
     {
         return content.data ();
     }
-        constexpr decltype (auto)
+
+        constexpr const_pointer
     data () const noexcept
     {
         return content.data ();
     }
 
-        /*
-    // ---
-    // unary operators:
-        constexpr array
-    operator+ () const
-    {
-            auto
-        r = *this;
-        std::transform (r.begin (), r.end (), r.begin (), [&](auto e){ return +e; });
-        return r;
-    }
-        constexpr array
-    operator- () const
-    {
-            auto
-        r = *this;
-        std::transform (r.begin (), r.end (), r.begin (), [&](auto e){ return -e; });
-        return r;
-    }
-    */
-
-
-#   define COMPUTED_ASSIGNEMENT(op)               \
+#   define COMPUTED_ASSIGNMENT(op)                \
         constexpr array_t&                        \
     operator op##= (const value_type& x)          \
     {                                             \
@@ -287,51 +258,25 @@ public:
         );                                        \
         return *this;                             \
     }
-    COMPUTED_ASSIGNEMENT(*)
-    COMPUTED_ASSIGNEMENT(/)
-    COMPUTED_ASSIGNEMENT(%)
-    COMPUTED_ASSIGNEMENT(+)
-    COMPUTED_ASSIGNEMENT(-)
-    COMPUTED_ASSIGNEMENT(^)
-    COMPUTED_ASSIGNEMENT(&)
-    COMPUTED_ASSIGNEMENT(|)
-    COMPUTED_ASSIGNEMENT(<<)
-    COMPUTED_ASSIGNEMENT(>>)
-#   undef COMPUTED_ASSIGNEMENT
-        /*
-#   define COMPUTED_ASSIGNEMENT(op)                                                      \
-        template <                                                                       \
-              class U                                                                    \
-            , class = decltype (std::declval <value_type> () op##= std::declval <U> ()) \
-        >                                                                                \
-        constexpr array&                                                                 \
-    operator op##= (U const& x)                                                          \
-    {                                                                                    \
-        for (auto& e: data_m)                                                            \
-        {                                                                                \
-            e op##= x;                                                                   \
-        }                                                                                \
-        return *this;                                                                    \
-    }
-    COMPUTED_ASSIGNEMENT(*)
-    COMPUTED_ASSIGNEMENT(/)
-    COMPUTED_ASSIGNEMENT(%)
-    COMPUTED_ASSIGNEMENT(+)
-    COMPUTED_ASSIGNEMENT(-)
-    COMPUTED_ASSIGNEMENT(^)
-    COMPUTED_ASSIGNEMENT(&)
-    COMPUTED_ASSIGNEMENT(|)
-    COMPUTED_ASSIGNEMENT(<<)
-    COMPUTED_ASSIGNEMENT(>>)
-#   undef COMPUTED_ASSIGNEMENT
-*/
+    COMPUTED_ASSIGNMENT(*)
+    COMPUTED_ASSIGNMENT(/)
+    COMPUTED_ASSIGNMENT(%)
+    COMPUTED_ASSIGNMENT(+)
+    COMPUTED_ASSIGNMENT(-)
+    COMPUTED_ASSIGNMENT(^)
+    COMPUTED_ASSIGNMENT(&)
+    COMPUTED_ASSIGNMENT(|)
+    COMPUTED_ASSIGNMENT(<<)
+    COMPUTED_ASSIGNMENT(>>)
+#   undef COMPUTED_ASSIGNMENT
+
 // Don't know how to constraint that...
 // , class = decltype (std::declval <value_type> () op##= std::declval <U> ())
-#   define COMPUTED_ASSIGNEMENT(op)                                                      \
+#   define COMPUTED_ASSIGNMENT(op)                                                       \
         template <                                                                       \
               class U                                                                    \
         >                                                                                \
-        constexpr decltype (auto)                                                        \
+        constexpr array_t&                                                               \
     operator op##= (array_t <U, N> const& v)                                             \
     {                                                                                    \
         std::transform (                                                                 \
@@ -343,21 +288,21 @@ public:
         );                                                                               \
         return *this;                                                                    \
     }
-    COMPUTED_ASSIGNEMENT(*)
-    COMPUTED_ASSIGNEMENT(/)
-    COMPUTED_ASSIGNEMENT(%)
-    COMPUTED_ASSIGNEMENT(+)
-    COMPUTED_ASSIGNEMENT(-)
-    COMPUTED_ASSIGNEMENT(^)
-    COMPUTED_ASSIGNEMENT(&)
-    COMPUTED_ASSIGNEMENT(|)
-    COMPUTED_ASSIGNEMENT(<<)
-    COMPUTED_ASSIGNEMENT(>>)
-#   undef COMPUTED_ASSIGNEMENT
+    COMPUTED_ASSIGNMENT(*)
+    COMPUTED_ASSIGNMENT(/)
+    COMPUTED_ASSIGNMENT(%)
+    COMPUTED_ASSIGNMENT(+)
+    COMPUTED_ASSIGNMENT(-)
+    COMPUTED_ASSIGNMENT(^)
+    COMPUTED_ASSIGNMENT(&)
+    COMPUTED_ASSIGNMENT(|)
+    COMPUTED_ASSIGNMENT(<<)
+    COMPUTED_ASSIGNMENT(>>)
+#   undef COMPUTED_ASSIGNMENT
 
         auto
     operator <=> (array_t <T, N> const&) const = default;
-}; // class array
+}; // struct array_t
 
     template <class T, std::size_t N>
     constexpr void
@@ -647,11 +592,41 @@ operator / (T const& a, array_t <U, N> const& b)
     return r;
 }
 
+// Result types of the math functions applied to the elements.
+    namespace
+detail::math
+{
+    // The using-declarations make the standard functions visible to the
+    // unqualified calls below, while argument-dependent lookup can still find
+    // overloads for user types. They must not be put in calculisto::array,
+    // where they would leak to the users of this header.
+#   define RESULT_TYPE(f)                                    \
+    using std::f;                                            \
+        template <class... ArgsType>                         \
+        using                                                \
+    f##_result_t = decltype (f (std::declval <ArgsType> ()...));
+    RESULT_TYPE(cos)
+    RESULT_TYPE(acos)
+    RESULT_TYPE(cosh)
+    RESULT_TYPE(sin)
+    RESULT_TYPE(asin)
+    RESULT_TYPE(sinh)
+    RESULT_TYPE(tan)
+    RESULT_TYPE(tanh)
+    RESULT_TYPE(atan)
+    RESULT_TYPE(exp)
+    RESULT_TYPE(log)
+    RESULT_TYPE(log10)
+    RESULT_TYPE(sqrt)
+    RESULT_TYPE(pow)
+#   undef RESULT_TYPE
+} // namespace detail::math
+
 #define UNARY_FUNCTION(f)                              \
     template <                                         \
           class T                                      \
         , std::size_t N                                \
-        , class U = decltype (f (std::declval <T> ())) \
+        , class U = detail::math::f##_result_t <T>     \
     >                                                  \
     constexpr auto                                     \
 f (array_t <T, N> const& p)                            \
@@ -705,18 +680,18 @@ abs (array_t <T, N> p)
     );
     return p;
 }
-    using std::pow; // <- TODO: Is there a way to remove that?
     template <
           class T
         , class U
         , std::size_t N
-        , class V = decltype (pow (std::declval <T> (), std::declval <U> ()))
+        , class V = detail::math::pow_result_t <T, U>
     >
     constexpr array_t <V, N>
 pow (array_t <T, N> const& p, U exp)
 {
         auto
     r = array_t <V, N> {};
+    using std::pow;
     std::transform (
             p.begin (),
             p.end   (),
@@ -730,13 +705,14 @@ pow (array_t <T, N> const& p, U exp)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (pow (std::declval <T> (), std::declval <U> ()))
+        , class V = detail::math::pow_result_t <T, U>
     >
     constexpr array_t <V, N>
 pow (T t, array_t <U, N> const& exp)
 {
         auto
     r = array_t <V, N> {};
+    using std::pow;
     std::transform (
             exp.begin (),
             exp.end   (),
@@ -750,13 +726,14 @@ pow (T t, array_t <U, N> const& exp)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (pow (std::declval <T> (), std::declval <U> ()))
+        , class V = detail::math::pow_result_t <T, U>
     >
     constexpr array_t <V, N>
 pow (array_t <T, N> const& p, array_t <U, N> const& exp)
 {
         auto
     r = array_t <V, N> {};
+    using std::pow;
     std::transform (
             p.begin (),
             p.end   (),

@@ -505,6 +505,59 @@ TEST_CASE("math functions")
     }
 }
 
+    namespace
+user
+{
+        struct
+    x_t
+    {
+            double
+        v;
+    };
+    constexpr x_t cos (x_t a)        { return { a.v + 1.0 }; }
+    constexpr x_t pow (x_t a, int n) { return { a.v * n }; }
+} // namespace user
+
+    template <class T>
+    concept
+qualified_pow_exists = requires (T x) { calculisto::array::pow (x, x); };
+
+TEST_CASE("math functions lookup")
+{
+    SUBCASE("user types are found by argument-dependent lookup")
+    {
+            array_t <user::x_t, 2>
+        a { user::x_t { 1.0 }, user::x_t { 2.0 } };
+            auto
+        c = cos (a);
+        static_assert (std::is_same_v <decltype (c), array_t <user::x_t, 2>>);
+        CHECK(c[0].v == 2.0);
+        CHECK(c[1].v == 3.0);
+            auto
+        p = pow (a, 3);
+        static_assert (std::is_same_v <decltype (p), array_t <user::x_t, 2>>);
+        CHECK(p[0].v == 3.0);
+        CHECK(p[1].v == 6.0);
+    }
+    SUBCASE("arrays of arrays")
+    {
+            array_t <array_t <double, 2>, 2>
+        a { array_t { 0.0, 1.0 }, array_t { 2.0, 3.0 } };
+            auto
+        c = cos (a);
+        static_assert (std::is_same_v <decltype (c), array_t <array_t <double, 2>, 2>>);
+        CHECK(c[1][0] == std::cos (2.0));
+            auto
+        p = pow (a, 2.0);
+        CHECK(p[1][1] == 9.0);
+    }
+    SUBCASE("the standard functions do not leak into the namespace")
+    {
+        static_assert (not qualified_pow_exists <double>);
+        static_assert (qualified_pow_exists <array_t <double, 2>>);
+    }
+}
+
 TEST_CASE("concatenation")
 {
         array_t <unsigned, 1> const
