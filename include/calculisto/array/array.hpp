@@ -652,8 +652,7 @@ f (array_t <T, N> const& p)                            \
     );                                                 \
     return r;                                          \
 }
-// See below.
-// UNARY_FUNCTION(abs)
+UNARY_FUNCTION(abs)
 UNARY_FUNCTION(cos)
 UNARY_FUNCTION(acos)
 UNARY_FUNCTION(cosh)
@@ -670,28 +669,6 @@ UNARY_FUNCTION(log10)
 UNARY_FUNCTION(sqrt)
 #undef UNARY_FUNCTION
 
-/* Can't use the above macro because
- * both std::abs and ::abs exist and this make
- * the return type deduction fail.
- *
- */
-    template <
-          class T
-        , std::size_t N
-    >
-    requires std::is_convertible_v <detail::math::abs_result_t <T>, T>
-    constexpr auto
-abs (array_t <T, N> p)
-{
-    using std::abs;
-    std::transform (
-            p.begin (),
-            p.end   (),
-            p.begin (),
-            [=](auto e){ return abs (e); }
-    );
-    return p;
-}
     template <
           class T
         , class U

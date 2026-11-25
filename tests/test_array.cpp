@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 #include "../include/calculisto/array/array.hpp"
 #include <cmath>
+#include <complex>
 #include <limits>
 #include <ranges>
 #include <stdexcept>
@@ -569,6 +570,18 @@ TEST_CASE("math functions")
         CHECK(abs (array_t { -1.0, 2.0, -3.0 }) == array_t { 1.0, 2.0, 3.0 });
         CHECK(abs (array_t { -1, 2, -3 })       == array_t { 1, 2, 3 });
         static_assert (std::is_same_v <decltype (abs (array_t { -1, 2 })), array_t <int, 2>>);
+        // The result type is that of std::abs, as for the other functions:
+        // small integers are promoted, as by unary minus...
+            array_t <short, 2> const
+        s { -1, 2 };
+        static_assert (std::is_same_v <decltype (abs (s)), array_t <int, 2>>);
+        static_assert (std::is_same_v <decltype (-s), array_t <int, 2>>);
+        CHECK(abs (s) == array_t { 1, 2 });
+        // ...and the absolute value of a complex number is real.
+            array_t <std::complex <double>, 2> const
+        z { std::complex <double> { 3.0, 4.0 }, std::complex <double> { 0.0, -2.0 } };
+        static_assert (std::is_same_v <decltype (abs (z)), array_t <double, 2>>);
+        CHECK(abs (z) == array_t { std::abs (z[0]), std::abs (z[1]) });
     }
     SUBCASE("pow")
     {
@@ -756,6 +769,8 @@ TEST_CASE("operations exist only when they are valid")
         static_assert (has_abs <d_t>);
         static_assert (has_abs <i_t>);
         static_assert (not has_abs <s_t>);
+        // std::abs is ambiguous for unsigned integers.
+        static_assert (not has_abs <array_t <unsigned, 2>>);
         static_assert (has_hypot <d_t>);
         static_assert (has_hypot <array_t <double, 3>>);
         static_assert (has_hypot <array_t <double, 4>>);
