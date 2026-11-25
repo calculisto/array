@@ -287,18 +287,18 @@ swap (array_t <T, N>& a, array_t <T, N>& b) noexcept (noexcept (a.swap (b)))
 
 // As for std::array, all the elements must have the same type.
     template <class T, class... U>
-array_t (T, U...) -> array_t <
-      std::enable_if_t <(std::is_same_v <T, U> && ...), T>
-    , 1 + sizeof... (U)
->;
+    requires (std::is_same_v <T, U> && ...)
+array_t (T, U...) -> array_t <T, 1 + sizeof... (U)>;
     template <
           class T
         , std::size_t N
-        , class V = decltype (+std::declval <T> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x) { +x; }
+    constexpr auto
 operator + (array_t <T, N> const& a)
 {
+        using
+    V = decltype (+a[0]);
         auto
     r = array_t <V, N> {};
     std::transform (
@@ -312,11 +312,13 @@ operator + (array_t <T, N> const& a)
     template <
           class T
         , std::size_t N
-        , class V = decltype (-std::declval <T> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x) { -x; }
+    constexpr auto
 operator - (array_t <T, N> const& a)
 {
+        using
+    V = decltype (-a[0]);
         auto
     r = array_t <V, N> {};
     std::transform (
@@ -332,11 +334,13 @@ operator - (array_t <T, N> const& a)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () + std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x + y; }
+    constexpr auto
 operator + (array_t <T, N> const& a, array_t <U, N> const& b)
 {
+        using
+    V = decltype (a[0] + b[0]);
         auto
     r = array_t <V, N> {};
     std::transform (
@@ -352,11 +356,13 @@ operator + (array_t <T, N> const& a, array_t <U, N> const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () - std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x - y; }
+    constexpr auto
 operator - (array_t <T, N> const& a, array_t <U, N> const& b)
 {
+        using
+    V = decltype (a[0] - b[0]);
         auto
     r = array_t <V, N> {};
     std::transform (
@@ -372,11 +378,13 @@ operator - (array_t <T, N> const& a, array_t <U, N> const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () * std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x * y; }
+    constexpr auto
 operator * (array_t <T, N> const& a, array_t <U, N> const& b)
 {
+        using
+    V = decltype (a[0] * b[0]);
         auto
     r = array_t <V, N> {};
     std::transform (
@@ -392,11 +400,13 @@ operator * (array_t <T, N> const& a, array_t <U, N> const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () / std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x / y; }
+    constexpr auto
 operator / (array_t <T, N> const& a, array_t <U, N> const& b)
 {
+        using
+    V = decltype (a[0] / b[0]);
         auto
     r = array_t <V, N> {};
     std::transform (
@@ -413,11 +423,13 @@ operator / (array_t <T, N> const& a, array_t <U, N> const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () + std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x + y; }
+    constexpr auto
 operator + (array_t <T, N> const& a, U const& b)
 {
+        using
+    V = decltype (a[0] + b);
         auto
     r = array_t <V, N> {};
     // TODO capture by value or by ref depending on U (using if constexpr)?
@@ -434,11 +446,13 @@ operator + (array_t <T, N> const& a, U const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () + std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x + y; }
+    constexpr auto
 operator + (T const& a, array_t <U, N> const& b)
 {
+        using
+    V = decltype (a + b[0]);
         auto
     r = array_t <V, N> {};
     std::transform (
@@ -453,11 +467,13 @@ operator + (T const& a, array_t <U, N> const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () - std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x - y; }
+    constexpr auto
 operator - (array_t <T, N> const& a, U const& b)
 {
+        using
+    V = decltype (a[0] - b);
         auto
     r = array_t <V, N> {};
     // TODO capture by value or by ref depending on U (using if constexpr)?
@@ -474,11 +490,13 @@ operator - (array_t <T, N> const& a, U const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () - std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x - y; }
+    constexpr auto
 operator - (T const& a, array_t <U, N> const& b)
 {
+        using
+    V = decltype (a - b[0]);
         auto
     r = array_t <V, N> {};
     std::transform (
@@ -493,11 +511,13 @@ operator - (T const& a, array_t <U, N> const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () * std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x * y; }
+    constexpr auto
 operator * (array_t <T, N> const& a, U const& b)
 {
+        using
+    V = decltype (a[0] * b);
         auto
     r = array_t <V, N> {};
     // TODO capture by value or by ref depending on U (using if constexpr)?
@@ -514,11 +534,13 @@ operator * (array_t <T, N> const& a, U const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () * std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x * y; }
+    constexpr auto
 operator * (T const& a, array_t <U, N> const& b)
 {
+        using
+    V = decltype (a * b[0]);
         auto
     r = array_t <V, N> {};
     std::transform (
@@ -533,11 +555,13 @@ operator * (T const& a, array_t <U, N> const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () / std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x / y; }
+    constexpr auto
 operator / (array_t <T, N> const& a, U const& b)
 {
+        using
+    V = decltype (a[0] / b);
         auto
     r = array_t <V, N> {};
     // TODO capture by value or by ref depending on U (using if constexpr)?
@@ -554,11 +578,13 @@ operator / (array_t <T, N> const& a, U const& b)
           class T
         , class U
         , std::size_t N
-        , class V = decltype (std::declval <T> () / std::declval <U> ())
     >
-    constexpr array_t <V, N>
+    requires requires (T const& x, U const& y) { x / y; }
+    constexpr auto
 operator / (T const& a, array_t <U, N> const& b)
 {
+        using
+    V = decltype (a / b[0]);
         auto
     r = array_t <V, N> {};
     std::transform (
@@ -606,11 +632,16 @@ detail::math
     template <                                         \
           class T                                      \
         , std::size_t N                                \
-        , class U = detail::math::f##_result_t <T>     \
     >                                                  \
+    requires requires                                  \
+    {                                                  \
+        typename detail::math::f##_result_t <T>;       \
+    }                                                  \
     constexpr auto                                     \
 f (array_t <T, N> const& p)                            \
 {                                                      \
+        using                                          \
+    U = detail::math::f##_result_t <T>;                \
         auto                                           \
     r = array_t <U, N> {};                             \
     using std::f;                                      \
@@ -666,11 +697,13 @@ abs (array_t <T, N> p)
           class T
         , class U
         , std::size_t N
-        , class V = detail::math::pow_result_t <T, U>
     >
-    constexpr array_t <V, N>
+    requires requires { typename detail::math::pow_result_t <T, U>; }
+    constexpr auto
 pow (array_t <T, N> const& p, U exp)
 {
+        using
+    V = detail::math::pow_result_t <T, U>;
         auto
     r = array_t <V, N> {};
     using std::pow;
@@ -687,11 +720,13 @@ pow (array_t <T, N> const& p, U exp)
           class T
         , class U
         , std::size_t N
-        , class V = detail::math::pow_result_t <T, U>
     >
-    constexpr array_t <V, N>
+    requires requires { typename detail::math::pow_result_t <T, U>; }
+    constexpr auto
 pow (T t, array_t <U, N> const& exp)
 {
+        using
+    V = detail::math::pow_result_t <T, U>;
         auto
     r = array_t <V, N> {};
     using std::pow;
@@ -708,11 +743,13 @@ pow (T t, array_t <U, N> const& exp)
           class T
         , class U
         , std::size_t N
-        , class V = detail::math::pow_result_t <T, U>
     >
-    constexpr array_t <V, N>
+    requires requires { typename detail::math::pow_result_t <T, U>; }
+    constexpr auto
 pow (array_t <T, N> const& p, array_t <U, N> const& exp)
 {
+        using
+    V = detail::math::pow_result_t <T, U>;
         auto
     r = array_t <V, N> {};
     using std::pow;
@@ -837,8 +874,8 @@ detail
           class U
         , class T
         , std::size_t N
-        , class = decltype (static_cast <U> (std::declval <T const&> ()))
     >
+    requires requires (T const& x) { static_cast <U> (x); }
     constexpr array_t <U, N>
 array_cast (array_t <T, N> const& a)
 {
