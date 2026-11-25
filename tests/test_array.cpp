@@ -1,5 +1,7 @@
 #include <doctest/doctest.h>
 #include "../include/calculisto/array/array.hpp"
+#include <cmath>
+#include <limits>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -588,11 +590,28 @@ TEST_CASE("math functions")
     }
     SUBCASE("hypot")
     {
+        // std::hypot need not be correctly rounded, so chained results are
+        // compared with a tolerance of a few ulps.
+            auto
+        ulps = [](double x){ return doctest::Approx (x).epsilon (8 * std::numeric_limits <double>::epsilon ()); };
+        CHECK(hypot (array_t <double, 0> {}) == 0.0);
         CHECK(hypot (array_t <double, 1> { -3.0 }) == 3.0);
-        CHECK(hypot (array_t <double, 2> { 3.0, 4.0 }) == 5.0);
-        CHECK(hypot (array_t <double, 3> { 2.0, 3.0, 6.0 }) == 7.0);
-        CHECK(hypot (array_t <double, 4> { 1.0, 1.0, 1.0, 1.0 }) == 2.0);
-        CHECK(hypot (array_t <double, 5> { 1.0, 2.0, 2.0, 4.0, 0.0 }) == 5.0);
+        CHECK(hypot (array_t <double, 2> { 3.0, 4.0 }) == ulps (5.0));
+        CHECK(hypot (array_t <double, 3> { 2.0, 3.0, 6.0 }) == ulps (7.0));
+        CHECK(hypot (array_t <double, 4> { 1.0, 1.0, 1.0, 1.0 }) == ulps (2.0));
+        CHECK(hypot (array_t <double, 5> { 1.0, 2.0, 2.0, 4.0, 0.0 }) == ulps (5.0));
+    }
+    SUBCASE("hypot does not overflow or underflow in the intermediate squares")
+    {
+        // hypot (x, 0) is exactly |x|, so these are exact.
+        CHECK(hypot (array_t { 1e200 }) == 1e200);
+        CHECK(hypot (array_t { 1e200, 1e200, 0.0, 0.0 })   == std::hypot (1e200, 1e200));
+        CHECK(hypot (array_t { 3e-200, 4e-200, 0.0, 0.0 }) == std::hypot (3e-200, 4e-200));
+        CHECK(hypot (array_t { 3e30f, 4e30f, 0.f, 0.f })   == std::hypot (3e30f, 4e30f));
+        // int values are converted to double, as by std::hypot, instead of
+        // overflowing (undefined behavior) when squared.
+        static_assert (std::is_same_v <decltype (hypot (array_t { 1, 2, 3, 4 })), double>);
+        CHECK(hypot (array_t { 30000, 40000, 0, 0 }) == std::hypot (30000, 40000));
     }
     SUBCASE("sum")
     {
@@ -630,6 +649,9 @@ user
     };
     constexpr x_t cos (x_t a)        { return { a.v + 1.0 }; }
     constexpr x_t pow (x_t a, int n) { return { a.v * n }; }
+    // Only a 2-argument hypot, like auto_diff's dual_t. Not a real hypot:
+    // it adds, which shows how the elements are combined.
+    constexpr x_t hypot (x_t a, x_t b) { return { a.v + b.v }; }
 } // namespace user
 
     template <class T>
@@ -652,6 +674,15 @@ TEST_CASE("math functions lookup")
         static_assert (std::is_same_v <decltype (p), array_t <user::x_t, 2>>);
         CHECK(p[0].v == 3.0);
         CHECK(p[1].v == 6.0);
+    }
+    SUBCASE("hypot chains the 2-argument hypot of a user type")
+    {
+            using
+        user::x_t;
+        CHECK(hypot (array_t <x_t, 1> { x_t { 1.0 } }).v == 1.0);
+        CHECK(hypot (array_t <x_t, 2> { x_t { 1.0 }, x_t { 2.0 } }).v == 3.0);
+        CHECK(hypot (array_t <x_t, 3> { x_t { 1.0 }, x_t { 2.0 }, x_t { 3.0 } }).v == 6.0);
+        CHECK(hypot (array_t <x_t, 4> { x_t { 1.0 }, x_t { 2.0 }, x_t { 3.0 }, x_t { 4.0 } }).v == 10.0);
     }
     SUBCASE("arrays of arrays")
     {

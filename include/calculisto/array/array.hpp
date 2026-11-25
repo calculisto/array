@@ -5,7 +5,6 @@
 #include <numeric>
 #include <cmath>
 #include <cstddef>
-#include <iterator>
 #include <type_traits>
 #include <utility>
 
@@ -762,32 +761,42 @@ pow (array_t <T, N> const& p, array_t <U, N> const& exp)
     );
     return r;
 }
+// hypot chains the 2-argument hypot of the elements, which avoids the
+// overflow and underflow of the intermediate squares: computing the square
+// root of the sum of the squares directly overflows for double values above
+// ~1e154, float values above ~1e19, and int values above ~46341 (undefined
+// behavior).
     template <class T, std::size_t N>
-    requires requires (T t)
+    requires requires
     {
-        t = t + t * t;
         T {};
-        typename detail::math::sqrt_result_t <T>;
+        typename detail::math::hypot_result_t <T, T>;
+        typename detail::math::hypot_result_t <detail::math::hypot_result_t <T, T>, T>;
     }
     constexpr auto
 hypot (array_t <T, N> const& p)
 {
-        using std::sqrt;
-        auto const
-    squares = p * p;
-    return sqrt (std::accumulate (
-        std::begin (squares),
-        std::end   (squares),
-        T {}
-    ));
-}
-    template <class T>
-    requires requires { typename detail::math::hypot_result_t <T, T>; }
-    constexpr auto
-hypot (array_t <T, 2> const& p)
-{
         using std::hypot;
-    return hypot (p[0], p[1]);
+        using
+    R = detail::math::hypot_result_t <T, T>;
+    if constexpr (N == 0)
+    {
+        return R {};
+    }
+    else if constexpr (N == 1)
+    {
+        return R { hypot (p[0], T {}) };
+    }
+    else
+    {
+            R
+        r = hypot (p[0], p[1]);
+        for (std::size_t i = 2; i < N; ++i)
+        {
+            r = hypot (r, p[i]);
+        }
+        return r;
+    }
 }
     template <class T>
     requires requires { typename detail::math::hypot_result_t <T, T, T>; }
