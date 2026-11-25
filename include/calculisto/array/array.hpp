@@ -276,7 +276,7 @@ public:
 
 
 #   define COMPUTED_ASSIGNEMENT(op)               \
-        constexpr auto                            \
+        constexpr array_t&                        \
     operator op##= (const value_type& x)          \
     {                                             \
         std::transform (                          \
@@ -771,10 +771,11 @@ pow (array_t <T, N> const& p, array_t <U, N> const& exp)
 hypot (array_t <T, N> const& p)
 {
         using std::sqrt;
-    p = p * p;
+        auto const
+    squares = p * p;
     return sqrt (std::accumulate (
-        std::begin (p),
-        std::end   (p),
+        std::begin (squares),
+        std::end   (squares),
         static_cast <T> (0)
     ));
 }

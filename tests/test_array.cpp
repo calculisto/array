@@ -91,6 +91,39 @@ TEST_CASE("array.hpp")
         static_assert (std::ranges::contiguous_range <a_t>);
         static_assert (std::ranges::sized_range <a_t>);
     }
+    SUBCASE("computed assignment with a scalar returns a reference")
+    {
+            using
+        a_t = array_t <int, 3>;
+#       define TEST_COMPUTED_ASSIGNMENT(op) \
+        static_assert (std::is_same_v <decltype (std::declval <a_t&> () op##= 1), a_t&>);
+        TEST_COMPUTED_ASSIGNMENT(*)
+        TEST_COMPUTED_ASSIGNMENT(/)
+        TEST_COMPUTED_ASSIGNMENT(%)
+        TEST_COMPUTED_ASSIGNMENT(+)
+        TEST_COMPUTED_ASSIGNMENT(-)
+        TEST_COMPUTED_ASSIGNMENT(^)
+        TEST_COMPUTED_ASSIGNMENT(&)
+        TEST_COMPUTED_ASSIGNMENT(|)
+        TEST_COMPUTED_ASSIGNMENT(<<)
+        TEST_COMPUTED_ASSIGNMENT(>>)
+#       undef TEST_COMPUTED_ASSIGNMENT
+            array_t <double, 3>
+        a { 1.0, 2.0, 3.0 };
+        CHECK(&(a += 1.0) == &a);
+        (a += 1.0) += 10.0;
+        CHECK(a == array_t <double, 3> { 13.0, 14.0, 15.0 });
+        (a -= 3.0) *= 2.0;
+        CHECK(a == array_t <double, 3> { 20.0, 22.0, 24.0 });
+    }
+    SUBCASE("hypot")
+    {
+        CHECK(hypot (array_t <double, 1> { -3.0 }) == 3.0);
+        CHECK(hypot (array_t <double, 2> { 3.0, 4.0 }) == 5.0);
+        CHECK(hypot (array_t <double, 3> { 2.0, 3.0, 6.0 }) == 7.0);
+        CHECK(hypot (array_t <double, 4> { 1.0, 1.0, 1.0, 1.0 }) == 2.0);
+        CHECK(hypot (array_t <double, 5> { 1.0, 2.0, 2.0, 4.0, 0.0 }) == 5.0);
+    }
     /*
     SUBCASE("converting copy ctor")
     {
