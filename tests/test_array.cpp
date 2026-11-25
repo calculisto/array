@@ -2,6 +2,7 @@
 #include "../include/calculisto/array/array.hpp"
 #include <ranges>
 #include <stdexcept>
+#include <string>
 #include <utility>
     using calculisto::array::array_t;
 
@@ -494,6 +495,38 @@ TEST_CASE("binary operators")
     }
 }
 
+// A quantity with a unit, like a physical quantity: its default value is
+// zero, but it can't be built from a plain number, which has no unit.
+    namespace
+units
+{
+        struct
+    metre_t {};
+        inline constexpr
+        metre_t
+    metre;
+
+        struct
+    length_t
+    {
+            constexpr
+        length_t () = default;
+            constexpr
+        length_t (double v, metre_t)
+            : metres { v }
+        {}
+            double
+        metres = 0.0;
+            friend constexpr length_t
+        operator + (length_t a, length_t b)
+        {
+            return { a.metres + b.metres, metre };
+        }
+            friend constexpr bool
+        operator == (length_t, length_t) = default;
+    };
+} // namespace units
+
 TEST_CASE("math functions")
 {
     SUBCASE("unary functions")
@@ -567,6 +600,22 @@ TEST_CASE("math functions")
         a = array_t { 1, 2, 3 };
         static_assert (sum (a) == 6);
         CHECK(sum (array_t { 0.5, 0.25, 0.25 }) == 1.0);
+        CHECK(sum (array_t <double, 0> {}) == 0.0);
+        // The sum starts from a value-initialized element, not from 0: a
+        // quantity with a unit can't be built from a plain number...
+            using
+        units::length_t;
+            using
+        units::metre;
+        static_assert (not std::is_constructible_v <length_t, int>);
+        static_assert (sum (array_t <length_t, 3> {
+              length_t { 1.0, metre }
+            , length_t { 2.0, metre }
+            , length_t { 3.0, metre }
+        }) == length_t { 6.0, metre });
+        static_assert (sum (array_t <length_t, 0> {}) == length_t {});
+        // ...and 0 would construct a std::string from a null pointer.
+        CHECK(sum (array_t <std::string, 3> { "a", "b", "c" }) == "abc");
     }
 }
 
@@ -620,6 +669,71 @@ TEST_CASE("math functions lookup")
     {
         static_assert (not qualified_pow_exists <double>);
         static_assert (qualified_pow_exists <array_t <double, 2>>);
+    }
+}
+
+#define VALID(name, ...)                                              \
+    template <class A, class B>                                       \
+    concept                                                           \
+name = requires (A a, B b) { __VA_ARGS__; };
+VALID(add_assignable, a += b)
+VALID(mul_assignable, a *= b)
+VALID(mod_assignable, a %= b)
+#undef VALID
+    template <class A>
+    concept
+has_abs = requires (A a) { abs (a); };
+    template <class A>
+    concept
+has_hypot = requires (A a) { hypot (a); };
+    template <class A>
+    concept
+has_sum = requires (A a) { sum (a); };
+
+// Asking whether an invalid operation exists must answer "no", not fail to
+// compile, and must not answer "yes" for an operation that fails to compile.
+TEST_CASE("operations exist only when they are valid")
+{
+        using
+    d_t = array_t <double, 2>;
+        using
+    i_t = array_t <int, 2>;
+        using
+    s_t = array_t <std::string, 2>;
+        using
+    p_t = array_t <int*, 2>;
+    SUBCASE("computed assignment with a scalar")
+    {
+        static_assert (add_assignable <d_t&, double>);
+        static_assert (mod_assignable <i_t&, int>);
+        static_assert (add_assignable <s_t&, std::string>);
+        static_assert (not mod_assignable <d_t&, double>);
+        static_assert (not mul_assignable <s_t&, std::string>);
+    }
+    SUBCASE("computed assignment with an array")
+    {
+        static_assert (add_assignable <d_t&, d_t>);
+        static_assert (add_assignable <d_t&, i_t>);
+        static_assert (mod_assignable <i_t&, i_t>);
+        static_assert (add_assignable <s_t&, s_t>);
+        static_assert (not mod_assignable <d_t&, d_t>);
+        static_assert (not add_assignable <p_t&, p_t>);
+        static_assert (not mul_assignable <s_t&, s_t>);
+    }
+    SUBCASE("math functions")
+    {
+        static_assert (has_abs <d_t>);
+        static_assert (has_abs <i_t>);
+        static_assert (not has_abs <s_t>);
+        static_assert (has_hypot <d_t>);
+        static_assert (has_hypot <array_t <double, 3>>);
+        static_assert (has_hypot <array_t <double, 4>>);
+        static_assert (not has_hypot <s_t>);
+        static_assert (not has_hypot <array_t <std::string, 3>>);
+        static_assert (not has_hypot <array_t <std::string, 4>>);
+        static_assert (has_sum <d_t>);
+        static_assert (has_sum <s_t>);
+        static_assert (not has_sum <p_t>);
     }
 }
 

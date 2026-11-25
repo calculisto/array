@@ -219,17 +219,19 @@ public:
         return content.data ();
     }
 
-#   define COMPUTED_ASSIGNMENT(op)                \
-        constexpr array_t&                        \
-    operator op##= (const value_type& x)          \
-    {                                             \
-        std::transform (                          \
-                begin (),                         \
-                end (),                           \
-                begin (),                         \
-                [=](auto& e){ return e op##= x; } \
-        );                                        \
-        return *this;                             \
+// The computed assignments exist only if they are valid for the elements.
+#   define COMPUTED_ASSIGNMENT(op)                                            \
+        constexpr array_t&                                                    \
+    operator op##= (const value_type& x)                                      \
+        requires requires (value_type& e, value_type const& y) { e op##= y; } \
+    {                                                                         \
+        std::transform (                                                      \
+                begin (),                                                     \
+                end (),                                                       \
+                begin (),                                                     \
+                [=](auto& e){ return e op##= x; }                             \
+        );                                                                    \
+        return *this;                                                         \
     }
     COMPUTED_ASSIGNMENT(*)
     COMPUTED_ASSIGNMENT(/)
@@ -243,12 +245,11 @@ public:
     COMPUTED_ASSIGNMENT(>>)
 #   undef COMPUTED_ASSIGNMENT
 
-// Don't know how to constraint that...
-// , class = decltype (std::declval <value_type> () op##= std::declval <U> ())
 #   define COMPUTED_ASSIGNMENT(op)                                                       \
         template <                                                                       \
               class U                                                                    \
         >                                                                                \
+        requires requires (value_type& e, U const& u) { e op##= u; }                     \
         constexpr array_t&                                                               \
     operator op##= (array_t <U, N> const& v)                                             \
     {                                                                                    \
@@ -257,7 +258,7 @@ public:
             end     (),                                                                  \
             v.begin (),                                                                  \
             begin   (),                                                                  \
-            [=](auto a, auto b){ return a op b; }                                        \
+            [=](auto a, auto const& b){ return a op##= b; }                              \
         );                                                                               \
         return *this;                                                                    \
     }
@@ -596,6 +597,8 @@ detail::math
     RESULT_TYPE(log10)
     RESULT_TYPE(sqrt)
     RESULT_TYPE(pow)
+    RESULT_TYPE(abs)
+    RESULT_TYPE(hypot)
 #   undef RESULT_TYPE
 } // namespace detail::math
 
@@ -645,7 +648,9 @@ UNARY_FUNCTION(sqrt)
     template <
           class T
         , std::size_t N
-    > constexpr auto
+    >
+    requires std::is_convertible_v <detail::math::abs_result_t <T>, T>
+    constexpr auto
 abs (array_t <T, N> p)
 {
     using std::abs;
@@ -721,6 +726,12 @@ pow (array_t <T, N> const& p, array_t <U, N> const& exp)
     return r;
 }
     template <class T, std::size_t N>
+    requires requires (T t)
+    {
+        t = t + t * t;
+        T {};
+        typename detail::math::sqrt_result_t <T>;
+    }
     constexpr auto
 hypot (array_t <T, N> const& p)
 {
@@ -730,10 +741,11 @@ hypot (array_t <T, N> const& p)
     return sqrt (std::accumulate (
         std::begin (squares),
         std::end   (squares),
-        static_cast <T> (0)
+        T {}
     ));
 }
     template <class T>
+    requires requires { typename detail::math::hypot_result_t <T, T>; }
     constexpr auto
 hypot (array_t <T, 2> const& p)
 {
@@ -741,6 +753,7 @@ hypot (array_t <T, 2> const& p)
     return hypot (p[0], p[1]);
 }
     template <class T>
+    requires requires { typename detail::math::hypot_result_t <T, T, T>; }
     constexpr auto
 hypot (array_t <T, 3> const& p)
 {
@@ -832,14 +845,19 @@ array_cast (array_t <T, N> const& a)
     return detail::array_cast <U> (a, std::make_index_sequence <N> ());
 }
 
-    template <class T, auto N> 
+    template <class T, auto N>
+    requires requires (T t)
+    {
+        t = t + t;
+        T {};
+    }
     constexpr auto
 sum (array_t <T, N> const& array)
 {
     return std::accumulate (
           array.begin ()
         , array.end ()
-        , static_cast <T> (0)
+        , T {}
     );
 }
 
