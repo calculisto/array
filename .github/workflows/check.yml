@@ -31,7 +31,7 @@ jobs:
             cxx: clang++ -D_LIBCPP_ABI_USE_WRAP_ITER_IN_STD_ARRAY
             cppflags: -I/opt/homebrew/include
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install --yes ${{ matrix.packages }}
