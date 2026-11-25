@@ -147,6 +147,11 @@ TEST_CASE("iterators and capacity")
         static_assert (std::is_convertible_v <a_t::iterator, a_t::const_iterator>);
         static_assert (std::ranges::contiguous_range <a_t>);
         static_assert (std::ranges::sized_range <a_t>);
+        // Make sure that the CI job testing class-type iterators really does.
+#       if defined (_LIBCPP_ABI_USE_WRAP_ITER_IN_STD_ARRAY) || defined (_LIBCPP_ABI_BOUNDED_ITERATORS_IN_STD_ARRAY)
+        static_assert (not std::is_pointer_v <a_t::iterator>);
+        static_assert (not std::is_pointer_v <a_t::const_iterator>);
+#       endif
     }
     SUBCASE("traversal")
     {

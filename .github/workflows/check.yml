@@ -7,25 +7,42 @@ on:
 jobs:
   check:
     name: ${{ matrix.name }}
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: gcc
+            os: ubuntu-24.04
             cxx: g++
             packages: g++ doctest-dev
-          - name: clang + libc++
-            cxx: clang++ -stdlib=libc++
-            packages: clang libc++-dev libc++abi-dev doctest-dev
+          - name: clang
+            os: ubuntu-24.04
+            cxx: clang++
+            packages: clang doctest-dev
+          - name: Apple clang + libc++
+            os: macos-latest
+            cxx: clang++
+            cppflags: -I/opt/homebrew/include
           # std::array iterators are class types instead of pointers, as with
           # some other standard libraries (e.g. MSVC's).
-          - name: clang + libc++ with class-type iterators
-            cxx: clang++ -stdlib=libc++ -D_LIBCPP_ABI_USE_WRAP_ITER_IN_STD_ARRAY
-            packages: clang libc++-dev libc++abi-dev doctest-dev
+          - name: Apple clang + libc++ with class-type iterators
+            os: macos-latest
+            cxx: clang++ -D_LIBCPP_ABI_USE_WRAP_ITER_IN_STD_ARRAY
+            cppflags: -I/opt/homebrew/include
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install --yes ${{ matrix.packages }}
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install doctest
+      - name: Show the tool versions
+        run: |
+          ${{ matrix.cxx }} --version
+          make --version
+      # CPPFLAGS, not CXXFLAGS: a CXXFLAGS given on the command line would
+      # replace the Makefile's.
       - name: Run the tests
-        run: make check CXX="${{ matrix.cxx }}"
+        run: make check CXX="${{ matrix.cxx }}" CPPFLAGS="${{ matrix.cppflags }}"
