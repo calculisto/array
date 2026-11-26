@@ -62,7 +62,7 @@ TEST_CASE("construction and assignment")
         TEST_NARROWING(true,  double, float)
         TEST_NARROWING(false, double, int)
         TEST_NARROWING(false, int,    double)
-        TEST_NARROWING(false, int,    long)
+        TEST_NARROWING(false, int,    long long)
         TEST_NARROWING(false, float,  double)
 #       undef TEST_NARROWING
     }
