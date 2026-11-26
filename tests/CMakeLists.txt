@@ -1,6 +1,8 @@
 # doctest: the installed one if it is recent enough, otherwise downloaded.
 include (FetchContent)
 set (DOCTEST_NO_INSTALL ON)
+# Our tests.cpp provides main: don't build doctest's library that does.
+set (DOCTEST_WITH_MAIN_IN_STATIC_LIB OFF)
 FetchContent_Declare (doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
     GIT_TAG        v2.5.3
