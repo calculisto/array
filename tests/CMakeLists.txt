@@ -19,6 +19,8 @@ set_target_properties (tests PROPERTIES CXX_EXTENSIONS OFF)
 # address and undefined behavior sanitizers (only the address sanitizer on
 # Windows, which has no undefined behavior sanitizer with MSVC, and a limited
 # one with clang-cl).
+# Keep the warning flags of gcc and clang in sync with compile_flags.txt, which
+# gives them to clangd.
 set (gnu      "$<CXX_COMPILER_FRONTEND_VARIANT:GNU>")
 set (msvc     "$<CXX_COMPILER_ID:MSVC>")
 set (clang_cl "$<AND:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_FRONTEND_VARIANT:MSVC>>")

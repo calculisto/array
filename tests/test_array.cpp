@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "../include/calculisto/array/array.hpp"
+#include <calculisto/array/array.hpp>
 #include <cmath>
 #include <complex>
 #include <limits>
