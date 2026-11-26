@@ -1,14 +1,56 @@
 {
     "version": 6,
-    "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
     "configurePresets": [
         {
-            "name": "dev",
-            "displayName": "Development",
-            "description": "Build the tests with the default compiler.",
+            "name": "base",
+            "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "dev",
+            "displayName": "Development: the default compiler",
+            "inherits": "base"
+        },
+        {
+            "name": "gcc",
+            "displayName": "gcc",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "clang",
+            "displayName": "clang (libstdc++ on Linux, Apple's libc++ on macOS)",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "clang-libcxx",
+            "displayName": "clang with libc++",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_CXX_FLAGS": "-stdlib=libc++"
+            }
+        },
+        {
+            "name": "clang-libcxx-class-iterators",
+            "displayName": "clang with libc++, whose std::array iterators are made class types",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_CXX_FLAGS": "-stdlib=libc++ -D_LIBCPP_ABI_USE_WRAP_ITER_IN_STD_ARRAY"
             }
         }
     ],
@@ -17,6 +59,26 @@
             "name": "dev",
             "configurePreset": "dev",
             "configuration": "Debug"
+        },
+        {
+            "name": "gcc",
+            "configurePreset": "gcc",
+            "configuration": "Debug"
+        },
+        {
+            "name": "clang",
+            "configurePreset": "clang",
+            "configuration": "Debug"
+        },
+        {
+            "name": "clang-libcxx",
+            "configurePreset": "clang-libcxx",
+            "configuration": "Debug"
+        },
+        {
+            "name": "clang-libcxx-class-iterators",
+            "configurePreset": "clang-libcxx-class-iterators",
+            "configuration": "Debug"
         }
     ],
     "testPresets": [
@@ -24,7 +86,128 @@
             "name": "dev",
             "configurePreset": "dev",
             "configuration": "Debug",
-            "output": { "outputOnFailure": true }
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "gcc",
+            "configurePreset": "gcc",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "clang",
+            "configurePreset": "clang",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "clang-libcxx",
+            "configurePreset": "clang-libcxx",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "clang-libcxx-class-iterators",
+            "configurePreset": "clang-libcxx-class-iterators",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "dev",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "dev"
+                },
+                {
+                    "type": "build",
+                    "name": "dev"
+                },
+                {
+                    "type": "test",
+                    "name": "dev"
+                }
+            ]
+        },
+        {
+            "name": "gcc",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "gcc"
+                },
+                {
+                    "type": "build",
+                    "name": "gcc"
+                },
+                {
+                    "type": "test",
+                    "name": "gcc"
+                }
+            ]
+        },
+        {
+            "name": "clang",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "clang"
+                },
+                {
+                    "type": "build",
+                    "name": "clang"
+                },
+                {
+                    "type": "test",
+                    "name": "clang"
+                }
+            ]
+        },
+        {
+            "name": "clang-libcxx",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "clang-libcxx"
+                },
+                {
+                    "type": "build",
+                    "name": "clang-libcxx"
+                },
+                {
+                    "type": "test",
+                    "name": "clang-libcxx"
+                }
+            ]
+        },
+        {
+            "name": "clang-libcxx-class-iterators",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "clang-libcxx-class-iterators"
+                },
+                {
+                    "type": "build",
+                    "name": "clang-libcxx-class-iterators"
+                },
+                {
+                    "type": "test",
+                    "name": "clang-libcxx-class-iterators"
+                }
+            ]
         }
     ]
 }
