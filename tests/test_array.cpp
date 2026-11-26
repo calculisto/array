@@ -1088,8 +1088,9 @@ user
     };
     constexpr x_t cos (x_t a)        { return { a.v + 1.0 }; }
     constexpr x_t pow (x_t a, int n) { return { a.v * n }; }
-    // Only a 2-argument hypot, like auto_diff's dual_t. Not a real hypot:
-    // it adds, which shows how the elements are combined.
+    // Only a 2-argument hypot, like dual numbers for automatic
+    // differentiation. Not a real hypot: it adds, which shows how the
+    // elements are combined.
     constexpr x_t hypot (x_t a, x_t b) { return { a.v + b.v }; }
 } // namespace user
 
