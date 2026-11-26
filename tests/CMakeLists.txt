@@ -83,3 +83,25 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_V
         "/wholearchive:${asan_thunk}"
     )
 endif ()
+
+# The installation: install into the build directory, then build and run a
+# project using the installed library through find_package.
+if (CALCULISTO_ARRAY_INSTALL)
+    set (test_prefix "${PROJECT_BINARY_DIR}/test-install")
+    add_test (NAME install
+        COMMAND "${CMAKE_COMMAND}" --install "${PROJECT_BINARY_DIR}"
+            --prefix "${test_prefix}" --config $<CONFIG>
+    )
+    set_tests_properties (install PROPERTIES FIXTURES_SETUP installed)
+    add_test (NAME consumer
+        COMMAND "${CMAKE_CTEST_COMMAND}" -C $<CONFIG>
+            --build-and-test
+                "${CMAKE_CURRENT_SOURCE_DIR}/consumer"
+                "${CMAKE_CURRENT_BINARY_DIR}/consumer"
+            --build-generator "${CMAKE_GENERATOR}"
+            --build-project calculisto_array_consumer
+            --build-options "-DCMAKE_PREFIX_PATH=${test_prefix}"
+            --test-command consumer
+    )
+    set_tests_properties (consumer PROPERTIES FIXTURES_REQUIRED installed)
+endif ()
