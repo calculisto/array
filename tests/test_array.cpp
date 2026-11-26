@@ -797,6 +797,192 @@ TEST_CASE("math functions")
     }
 }
 
+// Element-wise comparison with the std:: functions, NaNs being equal.
+    template <class X, class Y>
+    constexpr bool
+same_value (X x, Y y)
+{
+    if constexpr (std::is_floating_point_v <X> and std::is_floating_point_v <Y>)
+    {
+        if (std::isnan (x) or std::isnan (y))
+        {
+            return std::isnan (x) and std::isnan (y);
+        }
+    }
+    return x == y;
+}
+
+// Copies an array through volatile reads, so that the compiler can't evaluate
+// the functions applied to it at compile time: GCC computes the std:: math
+// functions exactly at compile time, while the C library may differ by an ulp
+// at run time (e.g. expm1 (1)).
+    template <class T, std::size_t N>
+    array_t <T, N>
+opaque (array_t <T, N> const& a)
+{
+        array_t <T, N>
+    r;
+    for (std::size_t i = 0; i < N; ++i)
+    {
+            T volatile
+        v = a[i];
+        r[i] = v;
+    }
+    return r;
+}
+
+// f (a) must have the element type of std::f (a[i]) and its values.
+#define CHECK_LIKE_STD_UNARY(f, a)                                          \
+    {                                                                       \
+            auto const                                                      \
+        r = f (a);                                                          \
+        static_assert (std::is_same_v <                                     \
+              typename std::remove_cvref_t <decltype (r)>::value_type       \
+            , decltype (std::f (a[0]))                                      \
+        >);                                                                 \
+        for (std::size_t i = 0; i < a.size (); ++i)                         \
+        {                                                                   \
+            CHECK(same_value (r[i], std::f (a[i])));                        \
+        }                                                                   \
+    }
+
+// The same for the three forms of a binary function: two arrays, an array
+// and a scalar, a scalar and an array.
+#define CHECK_LIKE_STD_BINARY(f, x, y)                                      \
+    {                                                                       \
+            auto const                                                      \
+        r = f (x, y);                                                       \
+        static_assert (std::is_same_v <                                     \
+              typename std::remove_cvref_t <decltype (r)>::value_type       \
+            , decltype (std::f (x[0], y[0]))                                \
+        >);                                                                 \
+            auto const                                                      \
+        rs = f (x, y[1]);                                                   \
+            auto const                                                      \
+        sr = f (x[1], y);                                                   \
+        for (std::size_t i = 0; i < x.size (); ++i)                         \
+        {                                                                   \
+            CHECK(same_value (r[i],  std::f (x[i], y[i])));                 \
+            CHECK(same_value (rs[i], std::f (x[i], y[1])));                 \
+            CHECK(same_value (sr[i], std::f (x[1], y[i])));                 \
+        }                                                                   \
+    }
+
+TEST_CASE("math functions behave like their std:: counterparts")
+{
+        using
+    limits = std::numeric_limits <double>;
+        auto const
+    finite = opaque (array_t <double, 13> { -100.0, -2.5, -1.5, -1.0, -0.5, -0.0, 0.0, 0.25, 0.5, 1.0, 1.5, 2.5, 100.0 });
+        auto const
+    special = opaque (array_t <double, 6> { limits::infinity (), -limits::infinity (), limits::quiet_NaN (), limits::denorm_min (), limits::max (), -limits::max () });
+        auto const
+    values = concatenate (finite, special);
+        auto const
+    integers = opaque (array_t <int, 5> { -3, -1, 0, 1, 3 });
+
+    SUBCASE("unary functions")
+    {
+#       define CHECK_LIKE_STD(f)                \
+        CHECK_LIKE_STD_UNARY(f, values)         \
+        CHECK_LIKE_STD_UNARY(f, integers)
+        CHECK_LIKE_STD(exp2)
+        CHECK_LIKE_STD(expm1)
+        CHECK_LIKE_STD(log2)
+        CHECK_LIKE_STD(log1p)
+        CHECK_LIKE_STD(cbrt)
+        CHECK_LIKE_STD(asinh)
+        CHECK_LIKE_STD(acosh)
+        CHECK_LIKE_STD(atanh)
+        CHECK_LIKE_STD(erf)
+        CHECK_LIKE_STD(erfc)
+        CHECK_LIKE_STD(tgamma)
+        CHECK_LIKE_STD(lgamma)
+        CHECK_LIKE_STD(ceil)
+        CHECK_LIKE_STD(floor)
+        CHECK_LIKE_STD(trunc)
+        CHECK_LIKE_STD(round)
+        CHECK_LIKE_STD(nearbyint)
+        CHECK_LIKE_STD(rint)
+        CHECK_LIKE_STD(fabs)
+        CHECK_LIKE_STD(logb)
+        CHECK_LIKE_STD(isfinite)
+        CHECK_LIKE_STD(isinf)
+        CHECK_LIKE_STD(isnan)
+        CHECK_LIKE_STD(isnormal)
+        CHECK_LIKE_STD(signbit)
+        CHECK_LIKE_STD(fpclassify)
+#       undef CHECK_LIKE_STD
+    }
+    SUBCASE("unary functions with an integer result")
+    {
+        // Infinities and NaNs have no integer value: the std:: functions
+        // give an unspecified result for them.
+#       define CHECK_LIKE_STD(f)                \
+        CHECK_LIKE_STD_UNARY(f, finite)         \
+        CHECK_LIKE_STD_UNARY(f, integers)
+        CHECK_LIKE_STD(lround)
+        CHECK_LIKE_STD(lrint)
+        CHECK_LIKE_STD(llround)
+        CHECK_LIKE_STD(llrint)
+        CHECK_LIKE_STD(ilogb)
+#       undef CHECK_LIKE_STD
+    }
+    SUBCASE("binary functions")
+    {
+            std::remove_cvref_t <decltype (values)>
+        other;
+        for (std::size_t i = 0; i < values.size (); ++i)
+        {
+            other[i] = values[(i + 5) % values.size ()];
+        }
+            auto const
+        other_integers = opaque (array_t <int, 5> { 2, -1, 3, 0, 1 });
+#       define CHECK_LIKE_STD(f)                            \
+        CHECK_LIKE_STD_BINARY(f, values, other)             \
+        CHECK_LIKE_STD_BINARY(f, integers, other_integers)
+        CHECK_LIKE_STD(fmod)
+        CHECK_LIKE_STD(remainder)
+        CHECK_LIKE_STD(fmin)
+        CHECK_LIKE_STD(fmax)
+        CHECK_LIKE_STD(fdim)
+        CHECK_LIKE_STD(copysign)
+        CHECK_LIKE_STD(nextafter)
+        CHECK_LIKE_STD(isgreater)
+        CHECK_LIKE_STD(isgreaterequal)
+        CHECK_LIKE_STD(isless)
+        CHECK_LIKE_STD(islessequal)
+        CHECK_LIKE_STD(islessgreater)
+        CHECK_LIKE_STD(isunordered)
+#       undef CHECK_LIKE_STD
+    }
+    SUBCASE("binary functions with a specific second argument type")
+    {
+            auto const
+        exponents = opaque (array_t <int, 13> { -3, -2, -1, 0, 1, 2, 3, -3, -2, -1, 0, 1, 2 });
+            auto const
+        long_exponents = opaque (array_t <long, 13> { -3, -2, -1, 0, 1, 2, 3, -3, -2, -1, 0, 1, 2 });
+            auto const
+        directions = opaque (array_t <long double, 13> { -1.0L, 0.0L, 1.0L, -1.0L, 0.0L, 1.0L, -1.0L, 0.0L, 1.0L, -1.0L, 0.0L, 1.0L, 2.0L });
+            auto const
+        integer_exponents = opaque (array_t <int, 5> { 2, -1, 3, 0, 1 });
+            auto const
+        integer_long_exponents = opaque (array_t <long, 5> { 2, -1, 3, 0, 1 });
+            auto const
+        integer_directions = opaque (array_t <long double, 5> { -1.0L, 0.0L, 1.0L, 2.0L, -2.0L });
+        CHECK_LIKE_STD_BINARY(ldexp,      finite,   exponents)
+        CHECK_LIKE_STD_BINARY(ldexp,      integers, integer_exponents)
+        CHECK_LIKE_STD_BINARY(scalbn,     finite,   exponents)
+        CHECK_LIKE_STD_BINARY(scalbn,     integers, integer_exponents)
+        CHECK_LIKE_STD_BINARY(scalbln,    finite,   long_exponents)
+        CHECK_LIKE_STD_BINARY(scalbln,    integers, integer_long_exponents)
+        CHECK_LIKE_STD_BINARY(nexttoward, finite,   directions)
+        CHECK_LIKE_STD_BINARY(nexttoward, integers, integer_directions)
+    }
+}
+#undef CHECK_LIKE_STD_UNARY
+#undef CHECK_LIKE_STD_BINARY
+
     namespace
 user
 {
