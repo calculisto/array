@@ -59,4 +59,27 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_V
     set_property (TEST array PROPERTY
         ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:${runtime_directory}"
     )
+    # Visual Studio links with lld-link directly, not through clang-cl, which
+    # would add the address sanitizer's libraries itself: give them to the
+    # linker, as clang-cl does with the release runtime library.
+    set (asan_libraries
+        "${runtime_directory}/clang_rt.asan_dynamic-x86_64.lib"
+        "${runtime_directory}/clang_rt.asan_dynamic_runtime_thunk-x86_64.lib"
+    )
+    foreach (library IN LISTS asan_libraries)
+        if (NOT EXISTS "${library}")
+            file (GLOB available "${runtime_directory}/clang_rt.asan*")
+            list (JOIN available "\n    " available)
+            message (FATAL_ERROR
+                "Address sanitizer library not found: ${library}\n"
+                "Available in ${runtime_directory}:\n    ${available}"
+            )
+        endif ()
+    endforeach ()
+    list (GET asan_libraries 0 asan_runtime)
+    list (GET asan_libraries 1 asan_thunk)
+    target_link_options (tests PRIVATE
+        "${asan_runtime}"
+        "/wholearchive:${asan_thunk}"
+    )
 endif ()
