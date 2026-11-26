@@ -650,6 +650,7 @@ detail::math
     RESULT_TYPE(log10)
     RESULT_TYPE(sqrt)
     RESULT_TYPE(pow)
+    RESULT_TYPE(atan2)
     RESULT_TYPE(abs)
     RESULT_TYPE(hypot)
 #   undef RESULT_TYPE
@@ -690,82 +691,86 @@ UNARY_FUNCTION(sinh)
 UNARY_FUNCTION(tan)
 UNARY_FUNCTION(tanh)
 UNARY_FUNCTION(atan)
-// UNARY_FUNCTION(atan2)
 UNARY_FUNCTION(exp)
 UNARY_FUNCTION(log)
 UNARY_FUNCTION(log10)
 UNARY_FUNCTION(sqrt)
 #undef UNARY_FUNCTION
 
-    template <
-          class T
-        , class U
-        , std::size_t N
-    >
-    requires requires { typename detail::math::pow_result_t <T, U>; }
-    constexpr auto
-pow (array_t <T, N> const& p, U exp)
-{
-        using
-    V = detail::math::pow_result_t <T, U>;
-        auto
-    r = array_t <V, N> {};
-    using std::pow;
-    std::transform (
-            p.begin (),
-            p.end   (),
-            r.begin (),
-            [=](auto e){ return pow (e, exp); }
-    );
-    return r;
+// Binary math functions, applied element-wise: to an array and a scalar, in
+// either order, or to two arrays.
+#define BINARY_FUNCTION(f)                                            \
+    template <                                                        \
+          class T                                                     \
+        , class U                                                     \
+        , std::size_t N                                               \
+    >                                                                 \
+    requires requires { typename detail::math::f##_result_t <T, U>; } \
+    constexpr auto                                                    \
+f (array_t <T, N> const& a, U b)                                      \
+{                                                                     \
+        using                                                         \
+    V = detail::math::f##_result_t <T, U>;                            \
+        auto                                                          \
+    r = array_t <V, N> {};                                            \
+    using std::f;                                                     \
+    std::transform (                                                  \
+            a.begin (),                                               \
+            a.end   (),                                               \
+            r.begin (),                                               \
+            [=](auto x){ return f (x, b); }                           \
+    );                                                                \
+    return r;                                                         \
+}                                                                     \
+    template <                                                        \
+          class T                                                     \
+        , class U                                                     \
+        , std::size_t N                                               \
+    >                                                                 \
+    requires requires { typename detail::math::f##_result_t <T, U>; } \
+    constexpr auto                                                    \
+f (T a, array_t <U, N> const& b)                                      \
+{                                                                     \
+        using                                                         \
+    V = detail::math::f##_result_t <T, U>;                            \
+        auto                                                          \
+    r = array_t <V, N> {};                                            \
+    using std::f;                                                     \
+    std::transform (                                                  \
+            b.begin (),                                               \
+            b.end   (),                                               \
+            r.begin (),                                               \
+            [=](auto y){ return f (a, y); }                           \
+    );                                                                \
+    return r;                                                         \
+}                                                                     \
+    template <                                                        \
+          class T                                                     \
+        , class U                                                     \
+        , std::size_t N                                               \
+    >                                                                 \
+    requires requires { typename detail::math::f##_result_t <T, U>; } \
+    constexpr auto                                                    \
+f (array_t <T, N> const& a, array_t <U, N> const& b)                  \
+{                                                                     \
+        using                                                         \
+    V = detail::math::f##_result_t <T, U>;                            \
+        auto                                                          \
+    r = array_t <V, N> {};                                            \
+    using std::f;                                                     \
+    std::transform (                                                  \
+            a.begin (),                                               \
+            a.end   (),                                               \
+            b.begin (),                                               \
+            r.begin (),                                               \
+            [=](auto x, auto y){ return f (x, y); }                   \
+    );                                                                \
+    return r;                                                         \
 }
+BINARY_FUNCTION(pow)
+BINARY_FUNCTION(atan2)
+#undef BINARY_FUNCTION
 
-    template <
-          class T
-        , class U
-        , std::size_t N
-    >
-    requires requires { typename detail::math::pow_result_t <T, U>; }
-    constexpr auto
-pow (T t, array_t <U, N> const& exp)
-{
-        using
-    V = detail::math::pow_result_t <T, U>;
-        auto
-    r = array_t <V, N> {};
-    using std::pow;
-    std::transform (
-            exp.begin (),
-            exp.end   (),
-            r.begin (),
-            [=](auto ee){ return pow (t, ee); }
-    );
-    return r;
-}
-
-    template <
-          class T
-        , class U
-        , std::size_t N
-    >
-    requires requires { typename detail::math::pow_result_t <T, U>; }
-    constexpr auto
-pow (array_t <T, N> const& p, array_t <U, N> const& exp)
-{
-        using
-    V = detail::math::pow_result_t <T, U>;
-        auto
-    r = array_t <V, N> {};
-    using std::pow;
-    std::transform (
-            p.begin (),
-            p.end   (),
-            exp.begin (),
-            r.begin (),
-            [=](auto e, auto ee){ return pow (e, ee); }
-    );
-    return r;
-}
 // hypot chains the 2-argument hypot of the elements, which avoids the
 // overflow and underflow of the intermediate squares: computing the square
 // root of the sum of the squares directly overflows for double values above

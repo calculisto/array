@@ -623,6 +623,10 @@ units
     };
 } // namespace units
 
+    template <class Y, class X>
+    concept
+has_atan2 = requires (Y y, X x) { atan2 (y, x); };
+
 TEST_CASE("math functions")
 {
     SUBCASE("unary functions")
@@ -693,6 +697,35 @@ TEST_CASE("math functions")
         CHECK(b[0] == pow (a[0], a[0]));
         CHECK(b[1] == pow (a[1], a[1]));
         CHECK(b[2] == pow (a[2], a[2]));
+    }
+    SUBCASE("atan2")
+    {
+        // The four quadrants, where atan2 (y, x) differs from atan (y / x).
+            array_t <double, 4> const
+        y { 1.0,  1.0, -1.0, -1.0 };
+            array_t <double, 4> const
+        x { 1.0, -1.0, -1.0,  1.0 };
+            array_t <double, 4>
+        b = atan2 (y, x);
+        for (std::size_t i = 0; i < 4; ++i)
+        {
+            CHECK(b[i] == std::atan2 (y[i], x[i]));
+        }
+        b = atan2 (y, -2.0);
+        for (std::size_t i = 0; i < 4; ++i)
+        {
+            CHECK(b[i] == std::atan2 (y[i], -2.0));
+        }
+        b = atan2 (-2.0, x);
+        for (std::size_t i = 0; i < 4; ++i)
+        {
+            CHECK(b[i] == std::atan2 (-2.0, x[i]));
+        }
+        static_assert (std::is_same_v <decltype (atan2 (array_t { 1, 2 }, array_t { 3, 4 })), array_t <double, 2>>);
+        static_assert (has_atan2 <array_t <double, 2>, array_t <double, 2>>);
+        static_assert (has_atan2 <array_t <double, 2>, double>);
+        static_assert (has_atan2 <double, array_t <double, 2>>);
+        static_assert (not has_atan2 <array_t <std::string, 2>, array_t <std::string, 2>>);
     }
     SUBCASE("hypot")
     {
