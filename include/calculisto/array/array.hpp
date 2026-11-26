@@ -22,7 +22,6 @@ calculisto::array
     struct
 array_t
 {
-public:
         using
     backend_type = std::array <T, N>;
 
@@ -1097,7 +1096,7 @@ array_cast (array_t <T, N> const& a)
     return detail::array_cast <U> (a, std::make_index_sequence <N> ());
 }
 
-    template <class T, auto N>
+    template <class T, std::size_t N>
     requires requires (T t)
     {
         t = t + t;
