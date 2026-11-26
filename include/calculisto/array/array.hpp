@@ -334,8 +334,8 @@ operator + (array_t <T, N> const& a)
 {
         using
     V = decltype (+a[0]);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           a.begin ()
         , a.end   ()
@@ -354,8 +354,8 @@ operator - (array_t <T, N> const& a)
 {
         using
     V = decltype (-a[0]);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           a.begin ()
         , a.end   ()
@@ -376,8 +376,8 @@ operator + (array_t <T, N> const& a, array_t <U, N> const& b)
 {
         using
     V = decltype (a[0] + b[0]);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           a.begin ()
         , a.end   ()
@@ -398,8 +398,8 @@ operator - (array_t <T, N> const& a, array_t <U, N> const& b)
 {
         using
     V = decltype (a[0] - b[0]);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           a.begin ()
         , a.end   ()
@@ -420,8 +420,8 @@ operator * (array_t <T, N> const& a, array_t <U, N> const& b)
 {
         using
     V = decltype (a[0] * b[0]);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           a.begin ()
         , a.end   ()
@@ -442,8 +442,8 @@ operator / (array_t <T, N> const& a, array_t <U, N> const& b)
 {
         using
     V = decltype (a[0] / b[0]);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           a.begin ()
         , a.end   ()
@@ -465,8 +465,8 @@ operator + (array_t <T, N> const& a, U const& b)
 {
         using
     V = decltype (a[0] + b);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           a.begin ()
         , a.end   ()
@@ -486,8 +486,8 @@ operator + (T const& a, array_t <U, N> const& b)
 {
         using
     V = decltype (a + b[0]);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           b.begin ()
         , b.end   ()
@@ -507,8 +507,8 @@ operator - (array_t <T, N> const& a, U const& b)
 {
         using
     V = decltype (a[0] - b);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           a.begin ()
         , a.end   ()
@@ -528,8 +528,8 @@ operator - (T const& a, array_t <U, N> const& b)
 {
         using
     V = decltype (a - b[0]);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           b.begin ()
         , b.end   ()
@@ -549,8 +549,8 @@ operator * (array_t <T, N> const& a, U const& b)
 {
         using
     V = decltype (a[0] * b);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           a.begin ()
         , a.end   ()
@@ -570,8 +570,8 @@ operator * (T const& a, array_t <U, N> const& b)
 {
         using
     V = decltype (a * b[0]);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           b.begin ()
         , b.end   ()
@@ -591,8 +591,8 @@ operator / (array_t <T, N> const& a, U const& b)
 {
         using
     V = decltype (a[0] / b);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           a.begin ()
         , a.end   ()
@@ -612,8 +612,8 @@ operator / (T const& a, array_t <U, N> const& b)
 {
         using
     V = decltype (a / b[0]);
-        auto
-    r = array_t <V, N> {};
+        array_t <V, N>
+    r;
     std::transform (
           b.begin ()
         , b.end   ()
@@ -670,8 +670,8 @@ f (array_t <T, N> const& p)                            \
 {                                                      \
         using                                          \
     U = detail::math::f##_result_t <T>;                \
-        auto                                           \
-    r = array_t <U, N> {};                             \
+        array_t <U, N>                                 \
+    r;                                                 \
     using std::f;                                      \
     std::transform (                                   \
             p.begin (),                                \
@@ -711,8 +711,8 @@ f (array_t <T, N> const& a, U b)                                      \
 {                                                                     \
         using                                                         \
     V = detail::math::f##_result_t <T, U>;                            \
-        auto                                                          \
-    r = array_t <V, N> {};                                            \
+        array_t <V, N>                                                \
+    r;                                                                \
     using std::f;                                                     \
     std::transform (                                                  \
             a.begin (),                                               \
@@ -733,8 +733,8 @@ f (T a, array_t <U, N> const& b)                                      \
 {                                                                     \
         using                                                         \
     V = detail::math::f##_result_t <T, U>;                            \
-        auto                                                          \
-    r = array_t <V, N> {};                                            \
+        array_t <V, N>                                                \
+    r;                                                                \
     using std::f;                                                     \
     std::transform (                                                  \
             b.begin (),                                               \
@@ -755,8 +755,8 @@ f (array_t <T, N> const& a, array_t <U, N> const& b)                  \
 {                                                                     \
         using                                                         \
     V = detail::math::f##_result_t <T, U>;                            \
-        auto                                                          \
-    r = array_t <V, N> {};                                            \
+        array_t <V, N>                                                \
+    r;                                                                \
     using std::f;                                                     \
     std::transform (                                                  \
             a.begin (),                                               \

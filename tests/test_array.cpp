@@ -589,6 +589,26 @@ TEST_CASE("binary operators")
         static_assert (a * 2 == array_t { 2,  4 });
         static_assert (2 * a == array_t { 2,  4 });
     }
+    // The results are default-initialized before being assigned: check the
+    // cases where this differs from zeroing them.
+    SUBCASE("constexpr, N == 0")
+    {
+            constexpr
+            array_t <int, 0>
+        e {};
+        static_assert (e + e == e);
+        static_assert (e * 2 == e);
+        static_assert (2 - e == e);
+        static_assert (-e == e);
+    }
+    SUBCASE("elements with a constructor")
+    {
+            array_t <std::string, 2> const
+        a { "a", "b" };
+        CHECK(a + std::string { "x" } == array_t <std::string, 2> { "ax", "bx" });
+        CHECK(std::string { "x" } + a == array_t <std::string, 2> { "xa", "xb" });
+        CHECK(a + a == array_t <std::string, 2> { "aa", "bb" });
+    }
 }
 
 // A quantity with a unit, like a physical quantity: its default value is
