@@ -29,6 +29,9 @@ jobs:
           - name: MSVC
             os: windows-latest
             preset: msvc
+          - name: clang-cl
+            os: windows-latest
+            preset: clang-cl
     steps:
       - uses: actions/checkout@v5
       - name: Show the CMake version

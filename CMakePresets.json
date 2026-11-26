@@ -66,6 +66,22 @@
                 "CMAKE_CXX_FLAGS_DEBUG": "/Zi /Ob0 /Od",
                 "CMAKE_EXE_LINKER_FLAGS_DEBUG": "/debug /INCREMENTAL:NO"
             }
+        },
+        {
+            "name": "clang-cl",
+            "displayName": "clang-cl, with Microsoft's standard library (Windows only)",
+            "inherits": "base",
+            "toolset": "ClangCL",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreadedDLL",
+                "CMAKE_CXX_FLAGS_DEBUG": "/Zi /Ob0 /Od",
+                "CMAKE_EXE_LINKER_FLAGS_DEBUG": "/debug /INCREMENTAL:NO"
+            }
         }
     ],
     "buildPresets": [
@@ -97,6 +113,11 @@
         {
             "name": "msvc",
             "configurePreset": "msvc",
+            "configuration": "Debug"
+        },
+        {
+            "name": "clang-cl",
+            "configurePreset": "clang-cl",
             "configuration": "Debug"
         }
     ],
@@ -144,6 +165,14 @@
         {
             "name": "msvc",
             "configurePreset": "msvc",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "clang-cl",
+            "configurePreset": "clang-cl",
             "configuration": "Debug",
             "output": {
                 "outputOnFailure": true
@@ -250,6 +279,23 @@
                 {
                     "type": "test",
                     "name": "msvc"
+                }
+            ]
+        },
+        {
+            "name": "clang-cl",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "clang-cl"
+                },
+                {
+                    "type": "build",
+                    "name": "clang-cl"
+                },
+                {
+                    "type": "test",
+                    "name": "clang-cl"
                 }
             ]
         }
