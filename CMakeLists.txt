@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.25)
 
 project (calculisto_array
-    VERSION 0.1.0
+    VERSION 0.1.1
     DESCRIPTION "A C++20 array type with arithmetic operators and math functions"
     LANGUAGES CXX
 )
