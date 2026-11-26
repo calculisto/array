@@ -256,7 +256,7 @@ TEST_CASE("iterators and capacity")
         CHECK(a.begin () == a.end ());
         CHECK(a == array_t <int, 0> {});
         CHECK(sum (a) == 0);
-        CHECK(hypot (array_t <double, 0> {}) == 0.0);
+        CHECK(euclidean_norm (array_t <double, 0> {}) == 0.0);
         CHECK(concatenate (a, array_t <int, 1> { 1 }) == array_t <int, 1> { 1 });
     }
 }
@@ -747,30 +747,30 @@ TEST_CASE("math functions")
         static_assert (has_atan2 <double, array_t <double, 2>>);
         static_assert (not has_atan2 <array_t <std::string, 2>, array_t <std::string, 2>>);
     }
-    SUBCASE("hypot")
+    SUBCASE("euclidean_norm")
     {
         // std::hypot need not be correctly rounded, so chained results are
         // compared with a tolerance of a few ulps.
             auto
         ulps = [](double x){ return doctest::Approx (x).epsilon (8 * std::numeric_limits <double>::epsilon ()); };
-        CHECK(hypot (array_t <double, 0> {}) == 0.0);
-        CHECK(hypot (array_t <double, 1> { -3.0 }) == 3.0);
-        CHECK(hypot (array_t <double, 2> { 3.0, 4.0 }) == ulps (5.0));
-        CHECK(hypot (array_t <double, 3> { 2.0, 3.0, 6.0 }) == ulps (7.0));
-        CHECK(hypot (array_t <double, 4> { 1.0, 1.0, 1.0, 1.0 }) == ulps (2.0));
-        CHECK(hypot (array_t <double, 5> { 1.0, 2.0, 2.0, 4.0, 0.0 }) == ulps (5.0));
+        CHECK(euclidean_norm (array_t <double, 0> {}) == 0.0);
+        CHECK(euclidean_norm (array_t <double, 1> { -3.0 }) == 3.0);
+        CHECK(euclidean_norm (array_t <double, 2> { 3.0, 4.0 }) == ulps (5.0));
+        CHECK(euclidean_norm (array_t <double, 3> { 2.0, 3.0, 6.0 }) == ulps (7.0));
+        CHECK(euclidean_norm (array_t <double, 4> { 1.0, 1.0, 1.0, 1.0 }) == ulps (2.0));
+        CHECK(euclidean_norm (array_t <double, 5> { 1.0, 2.0, 2.0, 4.0, 0.0 }) == ulps (5.0));
     }
-    SUBCASE("hypot does not overflow or underflow in the intermediate squares")
+    SUBCASE("euclidean_norm does not overflow or underflow in the intermediate squares")
     {
         // hypot (x, 0) is exactly |x|, so these are exact.
-        CHECK(hypot (array_t { 1e200 }) == 1e200);
-        CHECK(hypot (array_t { 1e200, 1e200, 0.0, 0.0 })   == std::hypot (1e200, 1e200));
-        CHECK(hypot (array_t { 3e-200, 4e-200, 0.0, 0.0 }) == std::hypot (3e-200, 4e-200));
-        CHECK(hypot (array_t { 3e30f, 4e30f, 0.f, 0.f })   == std::hypot (3e30f, 4e30f));
+        CHECK(euclidean_norm (array_t { 1e200 }) == 1e200);
+        CHECK(euclidean_norm (array_t { 1e200, 1e200, 0.0, 0.0 })   == std::hypot (1e200, 1e200));
+        CHECK(euclidean_norm (array_t { 3e-200, 4e-200, 0.0, 0.0 }) == std::hypot (3e-200, 4e-200));
+        CHECK(euclidean_norm (array_t { 3e30f, 4e30f, 0.f, 0.f })   == std::hypot (3e30f, 4e30f));
         // int values are converted to double, as by std::hypot, instead of
         // overflowing (undefined behavior) when squared.
-        static_assert (std::is_same_v <decltype (hypot (array_t { 1, 2, 3, 4 })), double>);
-        CHECK(hypot (array_t { 30000, 40000, 0, 0 }) == std::hypot (30000, 40000));
+        static_assert (std::is_same_v <decltype (euclidean_norm (array_t { 1, 2, 3, 4 })), double>);
+        CHECK(euclidean_norm (array_t { 30000, 40000, 0, 0 }) == std::hypot (30000, 40000));
     }
     SUBCASE("sum")
     {
@@ -868,6 +868,40 @@ opaque (array_t <T, N> const& a)
         }                                                                   \
     }
 
+// The same for the seven forms of a ternary function: each argument is an
+// array or a scalar, at least one being an array.
+#define CHECK_LIKE_STD_TERNARY(f, x, y, z)                                  \
+    {                                                                       \
+            auto const                                                      \
+        aaa = f (x,    y,    z);                                            \
+        static_assert (std::is_same_v <                                     \
+              typename std::remove_cvref_t <decltype (aaa)>::value_type     \
+            , decltype (std::f (x[0], y[0], z[0]))                          \
+        >);                                                                 \
+            auto const                                                      \
+        aas = f (x,    y,    z[1]);                                         \
+            auto const                                                      \
+        asa = f (x,    y[1], z);                                            \
+            auto const                                                      \
+        saa = f (x[1], y,    z);                                            \
+            auto const                                                      \
+        ass = f (x,    y[1], z[1]);                                         \
+            auto const                                                      \
+        sas = f (x[1], y,    z[1]);                                         \
+            auto const                                                      \
+        ssa = f (x[1], y[1], z);                                            \
+        for (std::size_t i = 0; i < x.size (); ++i)                         \
+        {                                                                   \
+            CHECK(same_value (aaa[i], std::f (x[i], y[i], z[i])));          \
+            CHECK(same_value (aas[i], std::f (x[i], y[i], z[1])));          \
+            CHECK(same_value (asa[i], std::f (x[i], y[1], z[i])));          \
+            CHECK(same_value (saa[i], std::f (x[1], y[i], z[i])));          \
+            CHECK(same_value (ass[i], std::f (x[i], y[1], z[1])));          \
+            CHECK(same_value (sas[i], std::f (x[1], y[i], z[1])));          \
+            CHECK(same_value (ssa[i], std::f (x[1], y[1], z[i])));          \
+        }                                                                   \
+    }
+
 TEST_CASE("math functions behave like their std:: counterparts")
 {
         using
@@ -954,6 +988,7 @@ TEST_CASE("math functions behave like their std:: counterparts")
         CHECK_LIKE_STD(islessequal)
         CHECK_LIKE_STD(islessgreater)
         CHECK_LIKE_STD(isunordered)
+        CHECK_LIKE_STD(hypot)
 #       undef CHECK_LIKE_STD
     }
     SUBCASE("binary functions with a specific second argument type")
@@ -979,9 +1014,68 @@ TEST_CASE("math functions behave like their std:: counterparts")
         CHECK_LIKE_STD_BINARY(nexttoward, finite,   directions)
         CHECK_LIKE_STD_BINARY(nexttoward, integers, integer_directions)
     }
+    SUBCASE("ternary functions")
+    {
+            std::remove_cvref_t <decltype (values)>
+        y;
+            std::remove_cvref_t <decltype (values)>
+        z;
+        for (std::size_t i = 0; i < values.size (); ++i)
+        {
+            y[i] = values[(i + 5) % values.size ()];
+            z[i] = values[(i + 11) % values.size ()];
+        }
+            auto const
+        integers_y = opaque (array_t <int, 5> { 2, -1, 3, 0, 1 });
+            auto const
+        integers_z = opaque (array_t <int, 5> { 0, 3, -2, 1, -1 });
+#       define CHECK_LIKE_STD(f)                                    \
+        CHECK_LIKE_STD_TERNARY(f, values, y, z)                     \
+        CHECK_LIKE_STD_TERNARY(f, integers, integers_y, integers_z)
+        CHECK_LIKE_STD(fma)
+        CHECK_LIKE_STD(lerp)
+        CHECK_LIKE_STD(hypot)
+#       undef CHECK_LIKE_STD
+    }
 }
 #undef CHECK_LIKE_STD_UNARY
 #undef CHECK_LIKE_STD_BINARY
+#undef CHECK_LIKE_STD_TERNARY
+
+    template <class X, class Y, class Z>
+    concept
+has_fma = requires (X x, Y y, Z z) { calculisto::array::fma (x, y, z); };
+    template <class A>
+    concept
+has_one_argument_hypot = requires (A a) { calculisto::array::hypot (a); };
+
+TEST_CASE("arguments of the functions of several arguments")
+{
+        using
+    a2 = array_t <double, 2>;
+        using
+    a3 = array_t <double, 3>;
+    SUBCASE("at least one array, all of the same size")
+    {
+        static_assert (has_fma <a2, a2, a2>);
+        static_assert (has_fma <a2, double, int>);
+        static_assert (has_fma <double, double, a2>);
+        static_assert (has_fma <array_t <double, 0>, double, double>);
+        static_assert (not has_fma <double, double, double>);
+        static_assert (not has_fma <a2, a3, double>);
+        static_assert (not has_fma <a2, double, a3>);
+        static_assert (not has_fma <array_t <std::string, 2>, a2, a2>);
+        static_assert (std::is_same_v <decltype (fma (array_t <int, 0> {}, 1, 2)), array_t <double, 0>>);
+    }
+    SUBCASE("hypot of a single array is euclidean_norm")
+    {
+        // As for std::hypot, hypot takes 2 or 3 arguments, element-wise.
+        static_assert (not has_one_argument_hypot <a3>);
+        static_assert (std::is_same_v <decltype (euclidean_norm (a3 {})), double>);
+        static_assert (std::is_same_v <decltype (hypot (a3 {}, a3 {})), a3>);
+        static_assert (std::is_same_v <decltype (hypot (a3 {}, a3 {}, a3 {})), a3>);
+    }
+}
 
     namespace
 user
@@ -1020,14 +1114,14 @@ TEST_CASE("math functions lookup")
         CHECK(p[0].v == 3.0);
         CHECK(p[1].v == 6.0);
     }
-    SUBCASE("hypot chains the 2-argument hypot of a user type")
+    SUBCASE("euclidean_norm chains the 2-argument hypot of a user type")
     {
             using
         user::x_t;
-        CHECK(hypot (array_t <x_t, 1> { x_t { 1.0 } }).v == 1.0);
-        CHECK(hypot (array_t <x_t, 2> { x_t { 1.0 }, x_t { 2.0 } }).v == 3.0);
-        CHECK(hypot (array_t <x_t, 3> { x_t { 1.0 }, x_t { 2.0 }, x_t { 3.0 } }).v == 6.0);
-        CHECK(hypot (array_t <x_t, 4> { x_t { 1.0 }, x_t { 2.0 }, x_t { 3.0 }, x_t { 4.0 } }).v == 10.0);
+        CHECK(euclidean_norm (array_t <x_t, 1> { x_t { 1.0 } }).v == 1.0);
+        CHECK(euclidean_norm (array_t <x_t, 2> { x_t { 1.0 }, x_t { 2.0 } }).v == 3.0);
+        CHECK(euclidean_norm (array_t <x_t, 3> { x_t { 1.0 }, x_t { 2.0 }, x_t { 3.0 } }).v == 6.0);
+        CHECK(euclidean_norm (array_t <x_t, 4> { x_t { 1.0 }, x_t { 2.0 }, x_t { 3.0 }, x_t { 4.0 } }).v == 10.0);
     }
     SUBCASE("arrays of arrays")
     {
@@ -1061,7 +1155,7 @@ VALID(mod_assignable, a %= b)
 has_abs = requires (A a) { abs (a); };
     template <class A>
     concept
-has_hypot = requires (A a) { hypot (a); };
+has_euclidean_norm = requires (A a) { euclidean_norm (a); };
     template <class A>
     concept
 has_sum = requires (A a) { sum (a); };
@@ -1103,12 +1197,12 @@ TEST_CASE("operations exist only when they are valid")
         static_assert (not has_abs <s_t>);
         // std::abs is ambiguous for unsigned integers.
         static_assert (not has_abs <array_t <unsigned, 2>>);
-        static_assert (has_hypot <d_t>);
-        static_assert (has_hypot <array_t <double, 3>>);
-        static_assert (has_hypot <array_t <double, 4>>);
-        static_assert (not has_hypot <s_t>);
-        static_assert (not has_hypot <array_t <std::string, 3>>);
-        static_assert (not has_hypot <array_t <std::string, 4>>);
+        static_assert (has_euclidean_norm <d_t>);
+        static_assert (has_euclidean_norm <array_t <double, 3>>);
+        static_assert (has_euclidean_norm <array_t <double, 4>>);
+        static_assert (not has_euclidean_norm <s_t>);
+        static_assert (not has_euclidean_norm <array_t <std::string, 3>>);
+        static_assert (not has_euclidean_norm <array_t <std::string, 4>>);
         static_assert (has_sum <d_t>);
         static_assert (has_sum <s_t>);
         static_assert (not has_sum <p_t>);

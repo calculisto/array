@@ -701,6 +701,8 @@ detail::math
     RESULT_TYPE(isunordered)
     RESULT_TYPE(abs)
     RESULT_TYPE(hypot)
+    RESULT_TYPE(fma)
+    RESULT_TYPE(lerp)
 #   undef RESULT_TYPE
 } // namespace detail::math
 
@@ -865,13 +867,111 @@ BINARY_FUNCTION(isless)
 BINARY_FUNCTION(islessequal)
 BINARY_FUNCTION(islessgreater)
 BINARY_FUNCTION(isunordered)
+BINARY_FUNCTION(hypot)
 #undef BINARY_FUNCTION
 
-// hypot chains the 2-argument hypot of the elements, which avoids the
-// overflow and underflow of the intermediate squares: computing the square
-// root of the sum of the squares directly overflows for double values above
-// ~1e154, float values above ~1e19, and int values above ~46341 (undefined
-// behavior).
+// Functions of several arguments, each of which can be an array or a scalar,
+// applied element-wise: at least one argument must be an array, and all the
+// arrays must have the same size.
+    namespace
+detail
+{
+        template <class X>
+        struct
+    is_array_t : std::false_type {};
+        template <class T, std::size_t N>
+        struct
+    is_array_t <array_t <T, N>> : std::true_type {};
+
+    // The element type of an array, or the type of a scalar.
+        template <class X>
+        struct
+    element_type { using type = X; };
+        template <class T, std::size_t N>
+        struct
+    element_type <array_t <T, N>> { using type = T; };
+        template <class X>
+        using
+    element_type_t = typename element_type <X>::type;
+
+    // The size of an array, 0 for a scalar.
+        template <class X>
+        inline constexpr std::size_t
+    size_of = 0;
+        template <class T, std::size_t N>
+        inline constexpr std::size_t
+    size_of <array_t <T, N>> = N;
+
+        template <class... X>
+        inline constexpr std::size_t
+    common_size = std::max ({ size_of <X>... });
+
+        template <class... X>
+        concept
+    elementwise_arguments =
+            (is_array_t <X>::value or ...)
+        and ((not is_array_t <X>::value or size_of <X> == common_size <X...>) and ...);
+
+    // The i-th element of an array, or the scalar itself.
+        template <class X>
+        constexpr decltype (auto)
+    element (X const& x, std::size_t i)
+    {
+        if constexpr (is_array_t <X>::value)
+        {
+            return x[i];
+        }
+        else
+        {
+            return x;
+        }
+    }
+} // namespace detail
+
+#define TERNARY_FUNCTION(f)                                                                \
+    template <class X, class Y, class Z>                                                   \
+    requires                                                                               \
+            detail::elementwise_arguments <X, Y, Z>                                        \
+        and requires                                                                       \
+        {                                                                                  \
+            typename detail::math::f##_result_t <                                          \
+                  detail::element_type_t <X>                                               \
+                , detail::element_type_t <Y>                                               \
+                , detail::element_type_t <Z>                                               \
+            >;                                                                             \
+        }                                                                                  \
+    constexpr auto                                                                         \
+f (X const& x, Y const& y, Z const& z)                                                     \
+{                                                                                          \
+        constexpr auto                                                                     \
+    N = detail::common_size <X, Y, Z>;                                                     \
+        using                                                                              \
+    V = detail::math::f##_result_t <                                                       \
+          detail::element_type_t <X>                                                       \
+        , detail::element_type_t <Y>                                                       \
+        , detail::element_type_t <Z>                                                       \
+    >;                                                                                     \
+        array_t <V, N>                                                                     \
+    r;                                                                                     \
+    using std::f;                                                                          \
+    for (std::size_t i = 0; i < N; ++i)                                                    \
+    {                                                                                      \
+        r[i] = f (detail::element (x, i), detail::element (y, i), detail::element (z, i)); \
+    }                                                                                      \
+    return r;                                                                              \
+}
+TERNARY_FUNCTION(fma)
+TERNARY_FUNCTION(lerp)
+TERNARY_FUNCTION(hypot)
+#undef TERNARY_FUNCTION
+
+// The Euclidean norm of an array: the square root of the sum of the squares of
+// its elements. It chains the 2-argument hypot of the elements (or uses the
+// 3-argument hypot for 3 elements), which avoids the overflow and underflow of
+// the intermediate squares: summing the squares directly overflows as soon as
+// the sum exceeds the largest value of the type, e.g. for doubles around
+// 1e154, floats around 1e19, and ints whose squares sum above 2^31 - 1, like
+// 30000 and 40000 (undefined behavior).
     template <class T, std::size_t N>
     requires requires
     {
@@ -880,7 +980,7 @@ BINARY_FUNCTION(isunordered)
         typename detail::math::hypot_result_t <detail::math::hypot_result_t <T, T>, T>;
     }
     constexpr auto
-hypot (array_t <T, N> const& p)
+euclidean_norm (array_t <T, N> const& p)
 {
         using std::hypot;
         using
@@ -907,7 +1007,7 @@ hypot (array_t <T, N> const& p)
     template <class T>
     requires requires { typename detail::math::hypot_result_t <T, T, T>; }
     constexpr auto
-hypot (array_t <T, 3> const& p)
+euclidean_norm (array_t <T, 3> const& p)
 {
         using std::hypot;
     return hypot (p[0], p[1], p[2]);
