@@ -52,6 +52,19 @@
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_CXX_FLAGS": "-stdlib=libc++ -D_LIBCPP_ABI_USE_WRAP_ITER_IN_STD_ARRAY"
             }
+        },
+        {
+            "name": "msvc",
+            "displayName": "MSVC (Windows only)",
+            "inherits": "base",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS_DEBUG": "/Zi /Ob0 /Od"
+            }
         }
     ],
     "buildPresets": [
@@ -78,6 +91,11 @@
         {
             "name": "clang-libcxx-class-iterators",
             "configurePreset": "clang-libcxx-class-iterators",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msvc",
+            "configurePreset": "msvc",
             "configuration": "Debug"
         }
     ],
@@ -117,6 +135,14 @@
         {
             "name": "clang-libcxx-class-iterators",
             "configurePreset": "clang-libcxx-class-iterators",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "msvc",
+            "configurePreset": "msvc",
             "configuration": "Debug",
             "output": {
                 "outputOnFailure": true
@@ -206,6 +232,23 @@
                 {
                     "type": "test",
                     "name": "clang-libcxx-class-iterators"
+                }
+            ]
+        },
+        {
+            "name": "msvc",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "msvc"
+                },
+                {
+                    "type": "build",
+                    "name": "msvc"
+                },
+                {
+                    "type": "test",
+                    "name": "msvc"
                 }
             ]
         }

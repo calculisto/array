@@ -26,6 +26,9 @@ jobs:
           - name: Apple clang + libc++ with class-type iterators
             os: macos-latest
             preset: clang-libcxx-class-iterators
+          - name: MSVC
+            os: windows-latest
+            preset: msvc
     steps:
       - uses: actions/checkout@v5
       - name: Show the CMake version

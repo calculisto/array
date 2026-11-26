@@ -31,3 +31,14 @@ target_link_options (tests PRIVATE
 )
 
 add_test (NAME array COMMAND tests)
+
+# With MSVC, the address sanitizer's runtime library is a DLL next to the
+# compiler, which must be found when the tests run. (The default MSVC debug
+# flags include /RTC1, incompatible with the address sanitizer: the msvc
+# preset sets them without it.)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    cmake_path (GET CMAKE_CXX_COMPILER PARENT_PATH compiler_directory)
+    set_property (TEST array PROPERTY
+        ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:${compiler_directory}"
+    )
+endif ()
