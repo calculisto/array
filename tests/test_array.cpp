@@ -471,6 +471,30 @@ TEST_CASE("computed assignment")
         a += array_t { 1, 2 };
         CHECK(a == array_t <double, 2> { 2.5, 4.5 });
     }
+    SUBCASE("with an element of the array itself")
+    {
+        // The scalar is a reference to the first element, which the
+        // computed assignment modifies first: the other elements must still
+        // use its original value.
+#       define TEST_SELF_ASSIGNMENT(T, op, init, expected) \
+        {                                                  \
+                array_t <T, 3>                             \
+            a init;                                        \
+            a op##= a[0];                                  \
+            CHECK(a == array_t <T, 3> expected);           \
+        }
+        TEST_SELF_ASSIGNMENT(double, +,  ({ 1.0, 2.0, 3.0 }), ({ 2.0, 3.0, 4.0 }))
+        TEST_SELF_ASSIGNMENT(double, -,  ({ 1.0, 2.0, 3.0 }), ({ 0.0, 1.0, 2.0 }))
+        TEST_SELF_ASSIGNMENT(double, *,  ({ 2.0, 3.0, 4.0 }), ({ 4.0, 6.0, 8.0 }))
+        TEST_SELF_ASSIGNMENT(double, /,  ({ 2.0, 4.0, 8.0 }), ({ 1.0, 2.0, 4.0 }))
+        TEST_SELF_ASSIGNMENT(int,    %,  ({ 3, 5, 7 }),       ({ 0, 2, 1 }))
+        TEST_SELF_ASSIGNMENT(int,    ^,  ({ 1, 2, 3 }),       ({ 0, 3, 2 }))
+        TEST_SELF_ASSIGNMENT(int,    &,  ({ 3, 5, 6 }),       ({ 3, 1, 2 }))
+        TEST_SELF_ASSIGNMENT(int,    |,  ({ 1, 2, 4 }),       ({ 1, 3, 5 }))
+        TEST_SELF_ASSIGNMENT(int,    <<, ({ 1, 2, 3 }),       ({ 2, 4, 6 }))
+        TEST_SELF_ASSIGNMENT(int,    >>, ({ 1, 4, 6 }),       ({ 0, 2, 3 }))
+#       undef TEST_SELF_ASSIGNMENT
+    }
     SUBCASE("integer operators")
     {
             array_t <int, 3>

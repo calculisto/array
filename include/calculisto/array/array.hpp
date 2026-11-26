@@ -219,6 +219,8 @@ public:
     }
 
 // The computed assignments exist only if they are valid for the elements.
+// The scalar is captured by value: it may be an element of this array itself
+// (a += a[0]), which the first iterations would otherwise modify.
 #   define COMPUTED_ASSIGNMENT(op)                                            \
         constexpr array_t&                                                    \
     operator op##= (const value_type& x)                                      \
@@ -465,8 +467,6 @@ operator + (array_t <T, N> const& a, U const& b)
     V = decltype (a[0] + b);
         auto
     r = array_t <V, N> {};
-    // TODO capture by value or by ref depending on U (using if constexpr)?
-    // E.g. is U is trivially copyable?
     std::transform (
           a.begin ()
         , a.end   ()
@@ -509,8 +509,6 @@ operator - (array_t <T, N> const& a, U const& b)
     V = decltype (a[0] - b);
         auto
     r = array_t <V, N> {};
-    // TODO capture by value or by ref depending on U (using if constexpr)?
-    // E.g. is U is trivially copyable?
     std::transform (
           a.begin ()
         , a.end   ()
@@ -553,8 +551,6 @@ operator * (array_t <T, N> const& a, U const& b)
     V = decltype (a[0] * b);
         auto
     r = array_t <V, N> {};
-    // TODO capture by value or by ref depending on U (using if constexpr)?
-    // E.g. is U is trivially copyable?
     std::transform (
           a.begin ()
         , a.end   ()
@@ -597,8 +593,6 @@ operator / (array_t <T, N> const& a, U const& b)
     V = decltype (a[0] / b);
         auto
     r = array_t <V, N> {};
-    // TODO capture by value or by ref depending on U (using if constexpr)?
-    // E.g. is U is trivially copyable?
     std::transform (
           a.begin ()
         , a.end   ()
